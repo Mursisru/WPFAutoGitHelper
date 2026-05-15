@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1 — 2026-05-15
+
+### Changed
+- **Create release** prompts for the **origin** remote URL (same dialog as Push) before `gh release create`, so you do not need to Push first only to configure the remote.
+
 ## 1.2.0 — 2026-05-15
 
 ### Added

@@ -1040,6 +1040,9 @@ namespace WpfAutoGitHelper.ViewModels
                 return;
             }
 
+            if (!await EnsureOriginRemoteAsync().ConfigureAwait(true))
+                return;
+
             var request = new ReleaseRequest
             {
                 Tag = ReleaseTag.Trim(),
