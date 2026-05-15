@@ -17,6 +17,7 @@ namespace WpfAutoGitHelper.Localization
         public string SettingsTheme => Loc.Get("Settings_Theme");
         public string ThemeLight => Loc.Get("Theme_Light");
         public string ThemeDark => Loc.Get("Theme_Dark");
+        public string ThemeBlack => Loc.Get("Theme_Black");
         public string SettingsConfirmCommit => Loc.Get("Settings_ConfirmCommit");
         public string SettingsAutoRefresh => Loc.Get("Settings_AutoRefresh");
         public string BtnClearLog => Loc.Get("Btn_ClearLog");

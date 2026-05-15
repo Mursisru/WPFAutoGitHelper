@@ -190,7 +190,7 @@ namespace WpfAutoGitHelper.ViewModels
                 if (value == null)
                     return;
 
-                var themeId = value.Id == ThemeManager.Dark ? ThemeManager.Dark : ThemeManager.Light;
+                var themeId = ThemeManager.Normalize(value.Id);
                 if (string.Equals(_selectedThemeId, themeId, StringComparison.OrdinalIgnoreCase))
                     return;
 
@@ -207,9 +207,7 @@ namespace WpfAutoGitHelper.ViewModels
             get => _selectedThemeId;
             set
             {
-                var theme = string.IsNullOrWhiteSpace(value) ? ThemeManager.Light : value.Trim().ToLowerInvariant();
-                if (theme != ThemeManager.Dark)
-                    theme = ThemeManager.Light;
+                var theme = ThemeManager.Normalize(value);
                 if (string.Equals(_selectedThemeId, theme, StringComparison.OrdinalIgnoreCase))
                     return;
 
@@ -440,6 +438,7 @@ namespace WpfAutoGitHelper.ViewModels
             Themes.Clear();
             Themes.Add(new ThemeOption(ThemeManager.Light, Loc.Get("Theme_Light")));
             Themes.Add(new ThemeOption(ThemeManager.Dark, Loc.Get("Theme_Dark")));
+            Themes.Add(new ThemeOption(ThemeManager.Black, Loc.Get("Theme_Black")));
             if (Themes.All(t => t.Id != selected))
                 selected = ThemeManager.Light;
             _selectedThemeId = selected;

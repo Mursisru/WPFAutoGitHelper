@@ -3,6 +3,7 @@
 ## 1.2.0 — 2026-05-15
 
 ### Added
+- **Black** UI theme (true black background) in addition to Light and Dark.
 - **Release publishing** tab: `gh release create` (tag, title, notes, target branch, latest / pre-release).
 - **Clear** button on Actions tab (reset repo path, branches, commit message).
 - `Loc.GetEnglish()` for auto-generated Git commit messages (always English).
