@@ -43,7 +43,7 @@ Passwords and PATs are **not** stored in this app.
 
 ## SmartScreen
 
-Smartscreen may trigger on startup. If you don't trust the file, compile it from open source.
+Smartscreen may trigger on startup. If you don't trust the file, compile it from open source (i'm recomendet Visual Studio or Visual Studio Code).
 
 VirusTotal - 0/71 (try yourself)
 Behavior detections - Not found (try yourself)
