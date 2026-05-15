@@ -219,6 +219,26 @@
                                       IsChecked="{Binding ReleaseLatest}"/>
                             <CheckBox Content="{Binding Ui.ReleasePrerelease}" Margin="0,0,0,12"
                                       IsChecked="{Binding ReleasePrerelease}"/>
+                            <TextBlock Text="{Binding Ui.ReleaseAssets}" Margin="0,4,0,4"
+                                       Foreground="{DynamicResource BrushMuted}"/>
+                            <TextBlock Text="{Binding Ui.ReleaseAssetsHint}" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource BrushMuted}" FontSize="11" Margin="0,0,0,6"/>
+                            <ListBox Style="{StaticResource AppListBoxStyle}"
+                                     MinHeight="72" MaxHeight="140" Margin="0,0,0,8"
+                                     ItemsSource="{Binding ReleaseAssets}"
+                                     SelectedItem="{Binding SelectedReleaseAsset}"
+                                     ToolTip="{Binding Ui.TipReleaseAssetsList}"/>
+                            <WrapPanel Margin="0,0,0,12">
+                                <Button Style="{StaticResource SecondaryButtonStyle}"
+                                        Content="{Binding Ui.BtnReleaseAddFiles}" Command="{Binding AddReleaseAssetsCommand}"
+                                        ToolTip="{Binding Ui.TipReleaseAddFiles}" MinWidth="120"/>
+                                <Button Style="{StaticResource SecondaryButtonStyle}"
+                                        Content="{Binding Ui.BtnReleaseAddBuild}" Command="{Binding AddReleaseBuildOutputCommand}"
+                                        ToolTip="{Binding Ui.TipReleaseAddBuild}" MinWidth="168"/>
+                                <Button Style="{StaticResource SecondaryButtonStyle}"
+                                        Content="{Binding Ui.BtnReleaseRemoveFile}" Command="{Binding RemoveReleaseAssetCommand}"
+                                        ToolTip="{Binding Ui.TipReleaseRemoveFile}" MinWidth="88"/>
+                            </WrapPanel>
                             <WrapPanel>
                                 <Button Style="{StaticResource PrimaryButtonStyle}"
                                         Content="{Binding Ui.BtnCreateRelease}" Command="{Binding CreateReleaseCommand}"

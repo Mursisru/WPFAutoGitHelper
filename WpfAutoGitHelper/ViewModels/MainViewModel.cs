@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -58,6 +59,11 @@ namespace WpfAutoGitHelper.ViewModels
             ReleaseTag = _settings.LastReleaseTag ?? "";
             ReleaseTitle = _settings.LastReleaseTitle ?? "";
             ReleaseNotes = _settings.LastReleaseNotes ?? "";
+            foreach (var assetPath in _settings.LastReleaseAssetPaths ?? Enumerable.Empty<string>())
+            {
+                if (!string.IsNullOrWhiteSpace(assetPath) && File.Exists(assetPath) && !ReleaseAssets.Contains(assetPath))
+                    ReleaseAssets.Add(assetPath);
+            }
 
             foreach (var p in _settings.RecentRepoPaths ?? Enumerable.Empty<string>())
             {
@@ -87,6 +93,9 @@ namespace WpfAutoGitHelper.ViewModels
             ClearWorkflowCommand = new RelayCommand(ClearWorkflow, () => !IsBusy);
             CreateReleaseCommand = new RelayCommand(async () => await CreateReleaseAsync(), () => HasValidRepo && !IsBusy);
             OpenReleasesCommand = new RelayCommand(async () => await OpenReleasesPageAsync(), () => HasValidRepo && !IsBusy);
+            AddReleaseAssetsCommand = new RelayCommand(AddReleaseAssets, () => !IsBusy);
+            RemoveReleaseAssetCommand = new RelayCommand(RemoveSelectedReleaseAsset, () => !IsBusy && SelectedReleaseAsset != null);
+            AddReleaseBuildOutputCommand = new RelayCommand(AddReleaseBuildOutput, () => HasValidRepo && !IsBusy);
             LoadGitConfigCommand = new RelayCommand(async () => await LoadGitConfigAsync(), () => !IsBusy);
             ApplyGitConfigCommand = new RelayCommand(async () => await ApplyGitConfigAsync(), () => !IsBusy);
             ClearIdentityCommand = new RelayCommand(async () => await ClearGitIdentityAsync(), () => !IsBusy);
@@ -126,6 +135,9 @@ namespace WpfAutoGitHelper.ViewModels
 
         public ObservableCollection<string> RecentRepoPaths { get; } = new ObservableCollection<string>();
         public ObservableCollection<string> Branches { get; } = new ObservableCollection<string>();
+        public ObservableCollection<string> ReleaseAssets { get; } = new ObservableCollection<string>();
+
+        private string _selectedReleaseAsset;
 
         public LanguageOption SelectedLanguage
         {
@@ -396,6 +408,19 @@ namespace WpfAutoGitHelper.ViewModels
             }
         }
 
+        public string SelectedReleaseAsset
+        {
+            get => _selectedReleaseAsset;
+            set
+            {
+                if (_selectedReleaseAsset == value)
+                    return;
+                _selectedReleaseAsset = value;
+                OnPropertyChanged();
+                RelayCommandRaise();
+            }
+        }
+
         public ICommand BrowseRepoCommand { get; }
         public ICommand CreateNewRepoCommand { get; }
         public ICommand SaveRepoCommand { get; }
@@ -410,6 +435,9 @@ namespace WpfAutoGitHelper.ViewModels
         public ICommand ClearWorkflowCommand { get; }
         public ICommand CreateReleaseCommand { get; }
         public ICommand OpenReleasesCommand { get; }
+        public ICommand AddReleaseAssetsCommand { get; }
+        public ICommand RemoveReleaseAssetCommand { get; }
+        public ICommand AddReleaseBuildOutputCommand { get; }
         public ICommand LoadGitConfigCommand { get; }
         public ICommand ApplyGitConfigCommand { get; }
         public ICommand ClearIdentityCommand { get; }
@@ -459,6 +487,7 @@ namespace WpfAutoGitHelper.ViewModels
             _settings.LastReleaseTag = ReleaseTag;
             _settings.LastReleaseTitle = ReleaseTitle;
             _settings.LastReleaseNotes = ReleaseNotes;
+            _settings.LastReleaseAssetPaths = ReleaseAssets.ToList();
             SettingsStore.Save(_settings);
         }
 
@@ -1019,6 +1048,7 @@ namespace WpfAutoGitHelper.ViewModels
                 TargetBranch = string.IsNullOrWhiteSpace(target) ? null : target.Trim(),
                 IsLatest = ReleaseLatest,
                 IsPrerelease = ReleasePrerelease,
+                AssetPaths = ReleaseAssets.ToList(),
             };
 
             IsBusy = true;
@@ -1026,18 +1056,129 @@ namespace WpfAutoGitHelper.ViewModels
             {
                 var result = await GitHubCliRunner.CreateReleaseAsync(RepoPath, request, CancellationToken.None)
                     .ConfigureAwait(true);
-                LogResult(result, "gh release create " + request.Tag);
+                var assetLabel = request.AssetPaths.Count > 0
+                    ? " +" + request.AssetPaths.Count + " file(s)"
+                    : "";
+                LogResult(result, "gh release create " + request.Tag + assetLabel);
                 if (result.Success)
+                {
+                    PersistReleaseAssets();
                     MessageBox.Show(
                         string.Format(Loc.Get("Msg_ReleaseCreated"), request.Tag),
                         Caption,
                         MessageBoxButton.OK,
                         MessageBoxImage.Information);
+                }
             }
             finally
             {
                 IsBusy = false;
             }
+        }
+
+        private void AddReleaseAssets()
+        {
+            var dlg = new System.Windows.Forms.OpenFileDialog
+            {
+                Title = Loc.Get("Dlg_ReleasePickFiles"),
+                Filter = Loc.Get("Dlg_ReleaseFileFilter"),
+                Multiselect = true,
+            };
+
+            if (dlg.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+                return;
+
+            var added = 0;
+            foreach (var file in dlg.FileNames)
+            {
+                if (AddReleaseAssetPath(file))
+                    added++;
+            }
+
+            if (added > 0)
+                PersistReleaseAssets();
+        }
+
+        private void AddReleaseBuildOutput()
+        {
+            var added = 0;
+            foreach (var path in GetDefaultReleaseBuildPaths())
+            {
+                if (AddReleaseAssetPath(path))
+                    added++;
+            }
+
+            if (added == 0)
+            {
+                MessageBox.Show(Loc.Get("Msg_ReleaseBuildNotFound"), Caption, MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            PersistReleaseAssets();
+        }
+
+        private IEnumerable<string> GetDefaultReleaseBuildPaths()
+        {
+            if (!HasValidRepo || string.IsNullOrWhiteSpace(RepoPath))
+                yield break;
+
+            var releaseDirs = new[]
+            {
+                Path.Combine(RepoPath, "WpfAutoGitHelper", "bin", "Release"),
+                Path.Combine(RepoPath, "bin", "Release"),
+            };
+
+            var seenDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var dir in releaseDirs)
+            {
+                if (!seenDirs.Add(dir) || !Directory.Exists(dir))
+                    continue;
+
+                var exe = Path.Combine(dir, "WpfAutoGitHelper.exe");
+                if (File.Exists(exe))
+                    yield return exe;
+
+                var pdb = Path.Combine(dir, "WpfAutoGitHelper.pdb");
+                if (File.Exists(pdb))
+                    yield return pdb;
+            }
+        }
+
+        private bool AddReleaseAssetPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+                return false;
+
+            path = Path.GetFullPath(path.Trim());
+            foreach (var existing in ReleaseAssets)
+            {
+                if (string.Equals(existing, path, StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
+
+            ReleaseAssets.Add(path);
+            return true;
+        }
+
+        private void RemoveSelectedReleaseAsset()
+        {
+            if (string.IsNullOrWhiteSpace(SelectedReleaseAsset))
+                return;
+
+            for (var i = ReleaseAssets.Count - 1; i >= 0; i--)
+            {
+                if (string.Equals(ReleaseAssets[i], SelectedReleaseAsset, StringComparison.OrdinalIgnoreCase))
+                    ReleaseAssets.RemoveAt(i);
+            }
+
+            SelectedReleaseAsset = null;
+            PersistReleaseAssets();
+        }
+
+        private void PersistReleaseAssets()
+        {
+            _settings.LastReleaseAssetPaths = ReleaseAssets.ToList();
+            PersistSettings();
         }
 
         private async Task OpenReleasesPageAsync()

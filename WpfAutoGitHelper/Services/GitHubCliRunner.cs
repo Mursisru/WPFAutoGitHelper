@@ -226,6 +226,27 @@ namespace WpfAutoGitHelper.Services
             if (request.IsPrerelease)
                 args.Add("--prerelease");
 
+            if (request.AssetPaths != null)
+            {
+                foreach (var asset in request.AssetPaths)
+                {
+                    if (string.IsNullOrWhiteSpace(asset))
+                        continue;
+
+                    var path = Path.GetFullPath(asset.Trim());
+                    if (!File.Exists(path))
+                    {
+                        return new GitRunResult
+                        {
+                            ExitCode = -1,
+                            StandardError = "Release asset not found: " + path
+                        };
+                    }
+
+                    args.Add(path);
+                }
+            }
+
             return await RunAsync(repoPath, cancellationToken, args.ToArray()).ConfigureAwait(false);
         }
 

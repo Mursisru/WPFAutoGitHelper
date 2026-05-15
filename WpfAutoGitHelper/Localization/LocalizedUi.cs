@@ -103,6 +103,15 @@ namespace WpfAutoGitHelper.Localization
         public string ReleaseTarget => Loc.Get("Release_Target");
         public string ReleaseLatest => Loc.Get("Release_Latest");
         public string ReleasePrerelease => Loc.Get("Release_Prerelease");
+        public string ReleaseAssets => Loc.Get("Release_Assets");
+        public string ReleaseAssetsHint => Loc.Get("Release_AssetsHint");
+        public string BtnReleaseAddFiles => Loc.Get("Btn_ReleaseAddFiles");
+        public string TipReleaseAddFiles => Loc.Get("Tip_ReleaseAddFiles");
+        public string BtnReleaseAddBuild => Loc.Get("Btn_ReleaseAddBuild");
+        public string TipReleaseAddBuild => Loc.Get("Tip_ReleaseAddBuild");
+        public string BtnReleaseRemoveFile => Loc.Get("Btn_ReleaseRemoveFile");
+        public string TipReleaseRemoveFile => Loc.Get("Tip_ReleaseRemoveFile");
+        public string TipReleaseAssetsList => Loc.Get("Tip_ReleaseAssetsList");
         public string BtnCreateRelease => Loc.Get("Btn_CreateRelease");
         public string TipCreateRelease => Loc.Get("Tip_CreateRelease");
         public string BtnOpenReleases => Loc.Get("Btn_OpenReleases");

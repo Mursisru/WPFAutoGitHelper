@@ -20,6 +20,7 @@ namespace WpfAutoGitHelper.Services
         public string LastReleaseTag { get; set; } = "";
         public string LastReleaseTitle { get; set; } = "";
         public string LastReleaseNotes { get; set; } = "";
+        public List<string> LastReleaseAssetPaths { get; set; } = new List<string>();
     }
 
     public static class SettingsStore
