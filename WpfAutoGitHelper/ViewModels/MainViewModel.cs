@@ -917,17 +917,55 @@ namespace WpfAutoGitHelper.ViewModels
             if (!await EnsureOriginRemoteAsync())
                 return;
 
+            if (await HasUncommittedChangesAsync())
+            {
+                MessageBox.Show(
+                    Loc.Get("Msg_PushNeedCommit"),
+                    Caption,
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
             var push = await RunGitLoggedAsync("push", "-u", "origin", branch);
             if (!push.Success)
             {
-                MessageBox.Show(
-                    Loc.Get("Msg_PushFailedHint"),
-                    Caption,
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                var err = push.StandardOutput + push.StandardError;
+                if (IsNonFastForwardPushError(err))
+                {
+                    MessageBox.Show(
+                        Loc.Get("Msg_PushNeedPull"),
+                        Caption,
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show(
+                        Loc.Get("Msg_PushFailedHint"),
+                        Caption,
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
             }
 
             await RefreshStatusAsync();
+        }
+
+        private async Task<bool> HasUncommittedChangesAsync()
+        {
+            var status = await RunGitQuietAsync("status", "--porcelain");
+            return status.Success && !string.IsNullOrWhiteSpace(status.StandardOutput);
+        }
+
+        private static bool IsNonFastForwardPushError(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return false;
+
+            return text.IndexOf("non-fast-forward", StringComparison.OrdinalIgnoreCase) >= 0
+                || text.IndexOf("failed to push some refs", StringComparison.OrdinalIgnoreCase) >= 0
+                || text.IndexOf("Updates were rejected", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private void ClearWorkflow()
