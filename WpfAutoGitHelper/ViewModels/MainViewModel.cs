@@ -32,12 +32,16 @@ namespace WpfAutoGitHelper.ViewModels
         private string _logText = "";
         private bool _isBusy;
         private bool _hasValidRepo;
-        private ChangedFileEntry _selectedFile;
         private string _selectedLanguageCode = Loc.DefaultLanguage;
         private string _selectedThemeId = ThemeManager.Light;
         private bool _confirmCommit = true;
-        private bool _confirmRestore = true;
         private bool _autoRefreshOnSaveRepo = true;
+        private string _releaseTag = "";
+        private string _releaseTitle = "";
+        private string _releaseNotes = "";
+        private string _releaseTargetBranch = "";
+        private bool _releaseLatest;
+        private bool _releasePrerelease;
         private bool _persistSettingsEnabled;
 
         public MainViewModel()
@@ -50,8 +54,10 @@ namespace WpfAutoGitHelper.ViewModels
             CommitMessage = _settings.LastCommitMessage ?? "";
             SelectedThemeId = string.IsNullOrWhiteSpace(_settings.Theme) ? ThemeManager.Light : _settings.Theme;
             ConfirmCommit = _settings.ConfirmCommit;
-            ConfirmRestore = _settings.ConfirmRestore;
             AutoRefreshOnSaveRepo = _settings.AutoRefreshOnSaveRepo;
+            ReleaseTag = _settings.LastReleaseTag ?? "";
+            ReleaseTitle = _settings.LastReleaseTitle ?? "";
+            ReleaseNotes = _settings.LastReleaseNotes ?? "";
 
             foreach (var p in _settings.RecentRepoPaths ?? Enumerable.Empty<string>())
             {
@@ -78,7 +84,9 @@ namespace WpfAutoGitHelper.ViewModels
             AddAllCommand = new RelayCommand(async () => await AddAllAsync(), () => HasValidRepo && !IsBusy);
             CommitCommand = new RelayCommand(async () => await CommitAsync(), () => HasValidRepo && !IsBusy);
             PushCommand = new RelayCommand(async () => await PushAsync(), () => HasValidRepo && !IsBusy);
-            RestoreFileCommand = new RelayCommand(async () => await RestoreFileAsync(), () => HasValidRepo && !IsBusy && SelectedFile != null);
+            ClearWorkflowCommand = new RelayCommand(ClearWorkflow, () => !IsBusy);
+            CreateReleaseCommand = new RelayCommand(async () => await CreateReleaseAsync(), () => HasValidRepo && !IsBusy);
+            OpenReleasesCommand = new RelayCommand(async () => await OpenReleasesPageAsync(), () => HasValidRepo && !IsBusy);
             LoadGitConfigCommand = new RelayCommand(async () => await LoadGitConfigAsync(), () => !IsBusy);
             ApplyGitConfigCommand = new RelayCommand(async () => await ApplyGitConfigAsync(), () => !IsBusy);
             ClearIdentityCommand = new RelayCommand(async () => await ClearGitIdentityAsync(), () => !IsBusy);
@@ -118,7 +126,6 @@ namespace WpfAutoGitHelper.ViewModels
 
         public ObservableCollection<string> RecentRepoPaths { get; } = new ObservableCollection<string>();
         public ObservableCollection<string> Branches { get; } = new ObservableCollection<string>();
-        public ObservableCollection<ChangedFileEntry> ChangedFiles { get; } = new ObservableCollection<ChangedFileEntry>();
 
         public LanguageOption SelectedLanguage
         {
@@ -227,19 +234,6 @@ namespace WpfAutoGitHelper.ViewModels
             }
         }
 
-        public bool ConfirmRestore
-        {
-            get => _confirmRestore;
-            set
-            {
-                if (_confirmRestore == value)
-                    return;
-                _confirmRestore = value;
-                OnPropertyChanged();
-                PersistSettings();
-            }
-        }
-
         public bool AutoRefreshOnSaveRepo
         {
             get => _autoRefreshOnSaveRepo;
@@ -342,14 +336,65 @@ namespace WpfAutoGitHelper.ViewModels
             }
         }
 
-        public ChangedFileEntry SelectedFile
+        public string ReleaseTag
         {
-            get => _selectedFile;
+            get => _releaseTag;
+            set { _releaseTag = value ?? ""; OnPropertyChanged(); PersistSettings(); }
+        }
+
+        public string ReleaseTitle
+        {
+            get => _releaseTitle;
+            set { _releaseTitle = value ?? ""; OnPropertyChanged(); PersistSettings(); }
+        }
+
+        public string ReleaseNotes
+        {
+            get => _releaseNotes;
+            set { _releaseNotes = value ?? ""; OnPropertyChanged(); PersistSettings(); }
+        }
+
+        public string ReleaseTargetBranch
+        {
+            get => _releaseTargetBranch;
+            set { _releaseTargetBranch = value ?? ""; OnPropertyChanged(); }
+        }
+
+        public bool ReleaseLatest
+        {
+            get => _releaseLatest;
             set
             {
-                _selectedFile = value;
+                if (_releaseLatest == value)
+                    return;
+
+                _releaseLatest = value;
+                if (value && _releasePrerelease)
+                {
+                    _releasePrerelease = false;
+                    OnPropertyChanged(nameof(ReleasePrerelease));
+                }
+
                 OnPropertyChanged();
-                RelayCommandRaise();
+            }
+        }
+
+        public bool ReleasePrerelease
+        {
+            get => _releasePrerelease;
+            set
+            {
+                if (_releasePrerelease == value)
+                    return;
+
+                _releasePrerelease = value;
+                if (value && _releaseLatest)
+                {
+                    _releaseLatest = false;
+                    OnPropertyChanged(nameof(ReleaseLatest));
+                }
+
+                OnPropertyChanged();
             }
         }
 
@@ -364,7 +409,9 @@ namespace WpfAutoGitHelper.ViewModels
         public ICommand AddAllCommand { get; }
         public ICommand CommitCommand { get; }
         public ICommand PushCommand { get; }
-        public ICommand RestoreFileCommand { get; }
+        public ICommand ClearWorkflowCommand { get; }
+        public ICommand CreateReleaseCommand { get; }
+        public ICommand OpenReleasesCommand { get; }
         public ICommand LoadGitConfigCommand { get; }
         public ICommand ApplyGitConfigCommand { get; }
         public ICommand ClearIdentityCommand { get; }
@@ -408,9 +455,11 @@ namespace WpfAutoGitHelper.ViewModels
             _settings.Language = SelectedLanguageCode;
             _settings.Theme = SelectedThemeId;
             _settings.ConfirmCommit = ConfirmCommit;
-            _settings.ConfirmRestore = ConfirmRestore;
             _settings.AutoRefreshOnSaveRepo = AutoRefreshOnSaveRepo;
             _settings.LastCommitMessage = CommitMessage;
+            _settings.LastReleaseTag = ReleaseTag;
+            _settings.LastReleaseTitle = ReleaseTitle;
+            _settings.LastReleaseNotes = ReleaseNotes;
             SettingsStore.Save(_settings);
         }
 
@@ -431,6 +480,12 @@ namespace WpfAutoGitHelper.ViewModels
 
         private async Task CreateNewRepoAsync()
         {
+            if (!GitHubCliRunner.IsAvailable())
+            {
+                MessageBox.Show(Loc.Get("Msg_NewRepo_GhRequired"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             var parentHint = Directory.Exists(RepoPath)
                 ? (Directory.Exists(Path.Combine(RepoPath, ".git"))
                     ? Path.GetDirectoryName(RepoPath)
@@ -469,6 +524,12 @@ namespace WpfAutoGitHelper.ViewModels
             var token = _operationCts.Token;
             try
             {
+                if (!await GitHubCliRunner.IsAuthenticatedAsync(token).ConfigureAwait(true))
+                {
+                    MessageBox.Show(Loc.Get("Msg_GhNotAuthenticated"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
                 try
                 {
                     await RepoScaffoldService.ApplyAsync(request, UserName, token).ConfigureAwait(true);
@@ -479,53 +540,65 @@ namespace WpfAutoGitHelper.ViewModels
                     return;
                 }
 
-                var init = await RunGitInDirectoryLoggedAsync(path, token, "init");
+                var init = await RunGitInDirectoryLoggedAsync(path, token, "init", "-b", "main");
                 if (!init.Success)
-                    return;
+                {
+                    init = await RunGitInDirectoryLoggedAsync(path, token, "init");
+                    if (!init.Success)
+                        return;
+                    await RunGitInDirectoryLoggedAsync(path, token, "branch", "-M", "main");
+                }
 
                 AppendLog(string.Format(Loc.Get("Msg_RepoInitialized"), path));
 
-                var add = await RunGitInDirectoryLoggedAsync(path, token, "add", "-A");
-                if (!add.Success)
+                if (!await ConfigureLocalIdentityForRepoAsync(path, token))
                     return;
 
-                var commit = await RunGitInDirectoryLoggedAsync(path, token, "commit", "-m", Loc.Get("Msg_InitialCommit"));
-                if (!commit.Success)
+                if (!await EnsureInitialCommitAsync(path, token))
                 {
-                    var combined = commit.StandardOutput + commit.StandardError;
-                    if (combined.IndexOf("nothing to commit", StringComparison.OrdinalIgnoreCase) < 0)
-                        return;
+                    MessageBox.Show(Loc.Get("Msg_NewRepo_NoCommits"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
                 }
 
-                if (request.CreateOnGitHub)
+                AppendLog(Loc.Get("Msg_NewRepo_CreatingGitHub"));
+                var gh = await GitHubCliRunner.CreateRepositoryAsync(request, token).ConfigureAwait(true);
+                LogResult(gh, "gh repo create");
+                if (!gh.Success)
                 {
-                    AppendLog(Loc.Get("Msg_NewRepo_CreatingGitHub"));
-                    var gh = await GitHubCliRunner.CreateRepositoryAsync(request, token).ConfigureAwait(true);
-                    LogResult(gh, "gh repo create");
-                    if (!gh.Success)
-                    {
-                        MessageBox.Show(
-                            gh.StandardError + "\n\n" + Loc.Get("Msg_NewRepo_GhFailedHint"),
-                            Caption,
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning);
-                    }
-                    else
-                    {
-                        AppendLog(string.Format(Loc.Get("Msg_NewRepo_GitHubCreated"), request.Name));
-                    }
+                    MessageBox.Show(
+                        gh.StandardError + "\n\n" + Loc.Get("Msg_NewRepo_GhFailedHint"),
+                        Caption,
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    RepoPath = path;
+                    FinishNewRepoSetup(path);
+                    await RefreshStatusAsync();
+                    return;
+                }
+
+                AppendLog(string.Format(Loc.Get("Msg_NewRepo_GitHubCreated"), request.Name));
+                var webUrl = await GitHubCliRunner.TryGetRemoteWebUrlAsync(path, token).ConfigureAwait(true);
+                if (!string.IsNullOrWhiteSpace(webUrl))
+                {
+                    _settings.CachedGitHubUrl = webUrl;
+                    SettingsStore.Save(_settings);
                 }
 
                 RepoPath = path;
                 FinishNewRepoSetup(path);
 
                 if (MessageBox.Show(
-                        Loc.Get("Msg_AddFilesNow"),
+                        Loc.Get("Msg_AddFolderNow"),
                         Caption,
                         MessageBoxButton.YesNo,
                         MessageBoxImage.Question) == MessageBoxResult.Yes)
                 {
-                    await CopyFilesIntoRepoAsync(path);
+                    await CopyFolderIntoRepoAsync(path);
+                    if (await EnsureOriginRemoteAsync())
+                    {
+                        var pushBranch = await ResolveCurrentBranchNameAsync(path, token);
+                        await RunGitInDirectoryLoggedAsync(path, token, "push", "-u", "origin", pushBranch);
+                    }
                 }
 
                 await RefreshStatusAsync();
@@ -534,6 +607,82 @@ namespace WpfAutoGitHelper.ViewModels
             {
                 IsBusy = false;
             }
+        }
+
+        private async Task<bool> ConfigureLocalIdentityForRepoAsync(string path, CancellationToken token)
+        {
+            var name = UserName?.Trim();
+            var email = UserEmail?.Trim();
+
+            if (string.IsNullOrEmpty(name))
+            {
+                var globalName = await RunGitInDirectoryAsync(path, token, "config", "--global", "user.name");
+                if (globalName.Success)
+                    name = globalName.StandardOutput.Trim();
+            }
+
+            if (string.IsNullOrEmpty(email))
+            {
+                var globalEmail = await RunGitInDirectoryAsync(path, token, "config", "--global", "user.email");
+                if (globalEmail.Success)
+                    email = globalEmail.StandardOutput.Trim();
+            }
+
+            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(email))
+            {
+                MessageBox.Show(Loc.Get("Msg_NeedIdentityForCommit"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+
+            var setName = await RunGitInDirectoryLoggedAsync(path, token, "config", "user.name", name);
+            if (!setName.Success)
+                return false;
+
+            var setEmail = await RunGitInDirectoryLoggedAsync(path, token, "config", "user.email", email);
+            return setEmail.Success;
+        }
+
+        private async Task<bool> EnsureInitialCommitAsync(string path, CancellationToken token)
+        {
+            var head = await RunGitInDirectoryAsync(path, token, "rev-parse", "HEAD");
+            if (head.Success)
+                return true;
+
+            var add = await RunGitInDirectoryLoggedAsync(path, token, "add", "-A");
+            if (!add.Success)
+                return false;
+
+            var commitMsg = Loc.GetEnglish("Msg_InitialCommit");
+            var commit = await RunGitInDirectoryLoggedAsync(path, token, "commit", "-m", commitMsg);
+            if (commit.Success)
+                return true;
+
+            var combined = commit.StandardOutput + commit.StandardError;
+            if (IsNothingToCommitMessage(combined))
+            {
+                commit = await RunGitInDirectoryLoggedAsync(path, token, "commit", "--allow-empty", "-m", Loc.GetEnglish("Msg_InitialCommit"));
+                if (commit.Success)
+                    return true;
+            }
+
+            if (combined.IndexOf("user.name", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                combined.IndexOf("user.email", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                combined.IndexOf("who you are", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                MessageBox.Show(Loc.Get("Msg_NeedIdentityForCommit"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+
+            return false;
+        }
+
+        private static bool IsNothingToCommitMessage(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return false;
+
+            return text.IndexOf("nothing to commit", StringComparison.OrdinalIgnoreCase) >= 0
+                || text.IndexOf("nothing added to commit", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private void FinishNewRepoSetup(string path)
@@ -545,46 +694,94 @@ namespace WpfAutoGitHelper.ViewModels
             ValidateRepo();
         }
 
-        private async Task CopyFilesIntoRepoAsync(string repoPath)
+        private async Task CopyFolderIntoRepoAsync(string repoPath)
         {
-            var picker = new Microsoft.Win32.OpenFileDialog
+            var dlg = new System.Windows.Forms.FolderBrowserDialog
             {
-                Title = Loc.Get("Dlg_PickFilesToCopy"),
-                Multiselect = true,
-                CheckFileExists = true,
+                Description = Loc.Get("Dlg_PickFolderToCopy"),
+                ShowNewFolderButton = false,
             };
 
-            if (picker.ShowDialog() != true || picker.FileNames == null || picker.FileNames.Length == 0)
+            if (dlg.ShowDialog() != System.Windows.Forms.DialogResult.OK)
                 return;
 
-            var copied = 0;
-            foreach (var sourceFile in picker.FileNames)
+            var sourceDir = Path.GetFullPath(dlg.SelectedPath.Trim());
+            if (string.Equals(sourceDir.TrimEnd('\\', '/'), repoPath.TrimEnd('\\', '/'), StringComparison.OrdinalIgnoreCase))
             {
-                if (string.IsNullOrWhiteSpace(sourceFile) || !File.Exists(sourceFile))
-                    continue;
-
-                var fileName = Path.GetFileName(sourceFile);
-                if (string.IsNullOrEmpty(fileName))
-                    continue;
-
-                var dest = Path.Combine(repoPath, fileName);
-                try
-                {
-                    File.Copy(sourceFile, dest, overwrite: true);
-                    copied++;
-                }
-                catch (Exception ex)
-                {
-                    AppendLog("Copy failed: " + fileName + " — " + ex.Message, true);
-                }
+                MessageBox.Show(Loc.Get("Msg_CopySameFolder"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
             }
 
-            if (copied > 0)
+            int copied;
+            try
             {
-                AppendLog(string.Format(Loc.Get("Msg_FilesCopied"), copied));
-                await RunGitInDirectoryLoggedAsync(repoPath, "add", "-A");
-                await RefreshStatusAsync();
+                copied = RepoFileCopy.CopyDirectoryContents(sourceDir, repoPath);
             }
+            catch (Exception ex)
+            {
+                AppendLog(Loc.Get("Msg_CopyFolderFailed") + " " + ex.Message, true);
+                return;
+            }
+
+            if (copied <= 0)
+            {
+                AppendLog(Loc.Get("Msg_CopyFolderEmpty"), true);
+                return;
+            }
+
+            AppendLog(string.Format(Loc.Get("Msg_FolderCopied"), copied));
+            await RunGitInDirectoryLoggedAsync(repoPath, "add", "-A");
+            var commit = await RunGitInDirectoryLoggedAsync(repoPath, "commit", "-m", Loc.GetEnglish("Msg_AddFilesCommit"));
+            if (!commit.Success)
+            {
+                var combined = commit.StandardOutput + commit.StandardError;
+                if (combined.IndexOf("nothing to commit", StringComparison.OrdinalIgnoreCase) < 0)
+                    return;
+            }
+
+            await RefreshStatusAsync();
+        }
+
+        private async Task<bool> EnsureOriginRemoteAsync()
+        {
+            var currentUrl = "";
+            var remote = await RunGitQuietAsync("remote", "get-url", "origin");
+            if (remote.Success && !string.IsNullOrWhiteSpace(remote.StandardOutput))
+                currentUrl = remote.StandardOutput.Trim();
+
+            var defaultUrl = string.IsNullOrWhiteSpace(currentUrl)
+                ? "https://github.com/user/repo.git"
+                : currentUrl;
+
+            var url = Microsoft.VisualBasic.Interaction.InputBox(
+                Loc.Get("Dlg_RemoteUrlPrompt"),
+                Loc.Get("Dlg_ConfirmRemoteTitle"),
+                defaultUrl);
+
+            if (string.IsNullOrWhiteSpace(url))
+                return false;
+
+            url = url.Trim();
+            if (!string.IsNullOrEmpty(currentUrl) &&
+                string.Equals(url, currentUrl, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            GitRunResult result;
+            if (string.IsNullOrEmpty(currentUrl))
+            {
+                AppendLog(Loc.Get("Msg_NoOrigin"), true);
+                result = await RunGitLoggedAsync("remote", "add", "origin", url);
+                if (result.Success)
+                    AppendLog(string.Format(Loc.Get("Msg_RemoteAdded"), url));
+            }
+            else
+            {
+                result = await RunGitLoggedAsync("remote", "set-url", "origin", url);
+                if (result.Success)
+                    AppendLog(string.Format(Loc.Get("Msg_RemoteUpdated"), url));
+            }
+
+            return result.Success;
         }
 
         private void SaveRepo()
@@ -647,14 +844,6 @@ namespace WpfAutoGitHelper.ViewModels
                 CurrentBranch = branch.StandardOutput.Trim();
 
             await RunGitLoggedAsync("status");
-            var porcelain = await RunGitQuietAsync("status", "--porcelain=v1");
-            ChangedFiles.Clear();
-            if (porcelain.Success)
-            {
-                foreach (var entry in GitRunner.ParsePorcelain(porcelain.StandardOutput))
-                    ChangedFiles.Add(entry);
-            }
-
             await RefreshBranchesAsync();
         }
 
@@ -689,13 +878,7 @@ namespace WpfAutoGitHelper.ViewModels
             await RefreshStatusAsync();
         }
 
-        private async Task DiffAsync()
-        {
-            if (SelectedFile != null && !string.IsNullOrWhiteSpace(SelectedFile.FilePath))
-                await RunGitLoggedAsync("diff", "--", SelectedFile.FilePath);
-            else
-                await RunGitLoggedAsync("diff");
-        }
+        private async Task DiffAsync() => await RunGitLoggedAsync("diff");
 
         private async Task AddAllAsync()
         {
@@ -731,31 +914,121 @@ namespace WpfAutoGitHelper.ViewModels
                 return;
             }
 
-            await RunGitLoggedAsync("push", "origin", branch);
+            if (!await EnsureOriginRemoteAsync())
+                return;
+
+            var push = await RunGitLoggedAsync("push", "-u", "origin", branch);
+            if (!push.Success)
+            {
+                MessageBox.Show(
+                    Loc.Get("Msg_PushFailedHint"),
+                    Caption,
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+
             await RefreshStatusAsync();
         }
 
-        private async Task RestoreFileAsync()
+        private void ClearWorkflow()
         {
-            if (SelectedFile == null)
+            if (MessageBox.Show(
+                    Loc.Get("Msg_ConfirmClearWorkflow"),
+                    Loc.Get("Dlg_ClearWorkflow"),
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question) != MessageBoxResult.Yes)
                 return;
 
-            if (SelectedFile.IsUntracked)
+            RepoPath = "";
+            CommitMessage = "";
+            NewBranchName = "";
+            SelectedBranch = "";
+            Branches.Clear();
+            CurrentBranch = UnknownBranch;
+            _settings.RepoPath = "";
+            _settings.LastCommitMessage = "";
+            PersistSettings();
+        }
+
+        private async Task CreateReleaseAsync()
+        {
+            if (!GitHubCliRunner.IsAvailable())
             {
-                MessageBox.Show(Loc.Get("Msg_UntrackedRestore"), Caption, MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(Loc.Get("Msg_ReleaseGhRequired"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            if (ConfirmRestore &&
-                MessageBox.Show(
-                    string.Format(Loc.Get("Msg_ConfirmRestore"), SelectedFile.FilePath),
-                    Loc.Get("Dlg_Restore"),
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            if (string.IsNullOrWhiteSpace(ReleaseTag))
+            {
+                MessageBox.Show(Loc.Get("Msg_ReleaseTagRequired"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
+            }
 
-            await RunGitLoggedAsync("restore", "--", SelectedFile.FilePath);
-            await RefreshStatusAsync();
+            var target = ReleaseTargetBranch;
+            if (string.IsNullOrWhiteSpace(target) && CurrentBranch != UnknownBranch)
+                target = CurrentBranch;
+
+            if (ReleaseLatest && ReleasePrerelease)
+            {
+                MessageBox.Show(Loc.Get("Msg_ReleaseLatestPrereleaseConflict"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var request = new ReleaseRequest
+            {
+                Tag = ReleaseTag.Trim(),
+                Title = ReleaseTitle?.Trim(),
+                Notes = ReleaseNotes?.Trim(),
+                TargetBranch = string.IsNullOrWhiteSpace(target) ? null : target.Trim(),
+                IsLatest = ReleaseLatest,
+                IsPrerelease = ReleasePrerelease,
+            };
+
+            IsBusy = true;
+            try
+            {
+                var result = await GitHubCliRunner.CreateReleaseAsync(RepoPath, request, CancellationToken.None)
+                    .ConfigureAwait(true);
+                LogResult(result, "gh release create " + request.Tag);
+                if (result.Success)
+                    MessageBox.Show(
+                        string.Format(Loc.Get("Msg_ReleaseCreated"), request.Tag),
+                        Caption,
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        private async Task OpenReleasesPageAsync()
+        {
+            var url = _settings.CachedGitHubUrl;
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                var remote = await RunGitQuietAsync("remote", "get-url", "origin");
+                if (remote.Success)
+                    url = GitRunner.ToGitHubWebUrl(remote.StandardOutput.Trim());
+            }
+
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                var ghUrl = await GitHubCliRunner.TryGetRemoteWebUrlAsync(RepoPath, CancellationToken.None)
+                    .ConfigureAwait(true);
+                if (!string.IsNullOrWhiteSpace(ghUrl))
+                    url = ghUrl;
+            }
+
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                MessageBox.Show(Loc.Get("Msg_NoGitHub"), Caption, MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            url = url.Trim().TrimEnd('/') + "/releases";
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
         }
 
         private async Task LoadGitConfigAsync()
@@ -832,8 +1105,20 @@ namespace WpfAutoGitHelper.ViewModels
                 return;
             }
 
+            if (!await EnsureOriginRemoteAsync())
+                return;
+
             await RunGitLoggedAsync("push", "-u", "origin", branch);
             await RefreshStatusAsync();
+        }
+
+        private async Task<string> ResolveCurrentBranchNameAsync(string repoPath, CancellationToken token)
+        {
+            var branch = await RunGitInDirectoryAsync(repoPath, token, "branch", "--show-current").ConfigureAwait(false);
+            if (branch.Success && !string.IsNullOrWhiteSpace(branch.StandardOutput))
+                return branch.StandardOutput.Trim();
+
+            return "main";
         }
 
         private void ValidateRepo()

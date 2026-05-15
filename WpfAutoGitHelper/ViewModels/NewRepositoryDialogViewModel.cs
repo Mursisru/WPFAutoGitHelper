@@ -20,7 +20,6 @@ namespace WpfAutoGitHelper.ViewModels
         private TemplateOption _selectedLicense;
         private bool _addReadme = true;
         private bool _isPublic = true;
-        private bool _createOnGitHub = true;
 
         public NewRepositoryDialogViewModel(string initialParentDirectory)
         {
@@ -34,7 +33,6 @@ namespace WpfAutoGitHelper.ViewModels
             _selectedLicense = LicenseOptions.FirstOrDefault();
 
             GhAvailable = GitHubCliRunner.IsAvailable();
-            _createOnGitHub = GhAvailable;
 
             BrowseParentCommand = new RelayCommand(BrowseParent);
         }
@@ -43,6 +41,8 @@ namespace WpfAutoGitHelper.ViewModels
         public ObservableCollection<TemplateOption> LicenseOptions { get; }
 
         public bool GhAvailable { get; }
+
+        public bool CanCreate => GhAvailable;
 
         public string Title => Loc.Get("Dlg_NewRepo_Title");
 
@@ -55,7 +55,6 @@ namespace WpfAutoGitHelper.ViewModels
         public string LabelVisibility => Loc.Get("NewRepo_Visibility");
         public string VisibilityPublic => Loc.Get("NewRepo_Visibility_Public");
         public string VisibilityPrivate => Loc.Get("NewRepo_Visibility_Private");
-        public string LabelGitHub => Loc.Get("NewRepo_CreateOnGitHub");
         public string GhHint => GhAvailable ? Loc.Get("NewRepo_GhHint") : Loc.Get("NewRepo_GhMissing");
         public string TargetPathHint => string.Format(Loc.Get("NewRepo_TargetPath"), PreviewPath);
         public string BtnBrowse => Loc.Get("Btn_Browse");
@@ -155,18 +154,6 @@ namespace WpfAutoGitHelper.ViewModels
             set => IsPublic = !value;
         }
 
-        public bool CreateOnGitHub
-        {
-            get => _createOnGitHub;
-            set
-            {
-                if (_createOnGitHub == value)
-                    return;
-                _createOnGitHub = value;
-                OnPropertyChanged();
-            }
-        }
-
         public string PreviewPath
         {
             get
@@ -185,6 +172,12 @@ namespace WpfAutoGitHelper.ViewModels
             request = null;
             errorKey = null;
 
+            if (!GhAvailable)
+            {
+                errorKey = "Msg_NewRepo_GhRequired";
+                return false;
+            }
+
             var safeName = RepoScaffoldService.SanitizeRepoName(Name);
             if (string.IsNullOrWhiteSpace(safeName))
             {
@@ -198,7 +191,23 @@ namespace WpfAutoGitHelper.ViewModels
                 return false;
             }
 
-            var fullPath = Path.Combine(ParentDirectory.Trim(), safeName);
+            var parent = ParentDirectory.Trim();
+            var fullPath = Path.Combine(parent, safeName);
+
+            if (GitRunner.IsGitRepository(parent))
+            {
+                errorKey = "Msg_NewRepo_ParentIsGit";
+                return false;
+            }
+
+            var outerGit = RepoFileCopy.FindContainingGitRoot(parent);
+            if (!string.IsNullOrEmpty(outerGit) &&
+                !string.Equals(Path.GetFullPath(outerGit), Path.GetFullPath(fullPath), StringComparison.OrdinalIgnoreCase))
+            {
+                errorKey = "Msg_NewRepo_NestedInGit";
+                return false;
+            }
+
             if (Directory.Exists(fullPath))
             {
                 errorKey = GitRunner.IsGitRepository(fullPath)
@@ -207,22 +216,15 @@ namespace WpfAutoGitHelper.ViewModels
                 return false;
             }
 
-            if (CreateOnGitHub && !GhAvailable)
-            {
-                errorKey = "Msg_NewRepo_GhRequired";
-                return false;
-            }
-
             request = new NewRepositoryRequest
             {
-                ParentDirectory = ParentDirectory.Trim(),
+                ParentDirectory = parent,
                 Name = safeName,
                 Description = Description?.Trim() ?? "",
                 GitignoreId = SelectedGitignore?.Id ?? "none",
                 LicenseId = SelectedLicense?.Id ?? "none",
                 AddReadme = AddReadme,
                 IsPrivate = IsPrivate,
-                CreateOnGitHub = CreateOnGitHub && GhAvailable,
             };
             return true;
         }

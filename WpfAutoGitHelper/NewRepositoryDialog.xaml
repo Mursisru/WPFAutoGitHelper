@@ -11,7 +11,9 @@
         ShowInTaskbar="False">
     <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="640">
         <StackPanel Margin="16">
-            <TextBlock Style="{StaticResource HeaderTitleStyle}" Text="{Binding Title}" Margin="0,0,0,12"/>
+            <TextBlock Style="{StaticResource HeaderTitleStyle}" Text="{Binding Title}" Margin="0,0,0,8"/>
+            <TextBlock Foreground="{DynamicResource BrushMuted}" FontSize="11"
+                       Text="{Binding GhHint}" TextWrapping="Wrap" Margin="0,0,0,12"/>
 
             <TextBlock Foreground="{DynamicResource BrushMuted}" Text="{Binding LabelName}" Margin="0,0,0,4"/>
             <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
@@ -56,25 +58,21 @@
                 </StackPanel>
             </Grid>
 
-            <CheckBox Content="{Binding LabelReadme}" IsChecked="{Binding AddReadme}" Margin="0,0,0,12"/>
+            <CheckBox Content="{Binding LabelReadme}" IsChecked="{Binding AddReadme}" Margin="0,0,0,10"/>
 
-            <GroupBox Style="{StaticResource CardGroupStyle}" Header="{Binding LabelVisibility}" Margin="0,0,0,10">
+            <GroupBox Style="{StaticResource CardGroupStyle}" Header="{Binding LabelVisibility}" Margin="0,0,0,16">
                 <StackPanel>
                     <RadioButton Content="{Binding VisibilityPublic}" IsChecked="{Binding IsPublic}" GroupName="Visibility" Margin="0,2"/>
                     <RadioButton Content="{Binding VisibilityPrivate}" IsChecked="{Binding IsPrivate}" GroupName="Visibility" Margin="0,2"/>
                 </StackPanel>
             </GroupBox>
 
-            <CheckBox Content="{Binding LabelGitHub}" IsChecked="{Binding CreateOnGitHub}"
-                      IsEnabled="{Binding GhAvailable}" Margin="0,0,0,4"/>
-            <TextBlock Foreground="{DynamicResource BrushMuted}" FontSize="11"
-                       Text="{Binding GhHint}" TextWrapping="Wrap" Margin="0,0,0,16"/>
-
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Style="{StaticResource SecondaryButtonStyle}" Content="{Binding BtnCancel}"
                         IsCancel="True" MinWidth="96" Margin="0,0,8,0"/>
                 <Button Style="{StaticResource PrimaryButtonStyle}" Content="{Binding BtnCreate}"
-                        IsDefault="True" Click="Create_Click" MinWidth="120"/>
+                        IsEnabled="{Binding CanCreate}"
+                        IsDefault="True" Click="Create_Click" MinWidth="160"/>
             </StackPanel>
         </StackPanel>
     </ScrollViewer>

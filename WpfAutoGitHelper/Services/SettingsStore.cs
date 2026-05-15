@@ -17,59 +17,32 @@ namespace WpfAutoGitHelper.Services
         public bool ConfirmCommit { get; set; } = true;
         public bool ConfirmRestore { get; set; } = true;
         public bool AutoRefreshOnSaveRepo { get; set; } = true;
+        public string LastReleaseTag { get; set; } = "";
+        public string LastReleaseTitle { get; set; } = "";
+        public string LastReleaseNotes { get; set; } = "";
     }
 
     public static class SettingsStore
     {
-        private static readonly string SettingsDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "WpfAutoGitHelper");
-
-        private static readonly string SettingsFile = Path.Combine(SettingsDir, "settings.json");
-
         private static readonly JavaScriptSerializer Serializer = new JavaScriptSerializer();
+
+        public static string SettingsDirectory => AppPaths.DataDirectory;
+
+        public static string SettingsFilePath => AppPaths.SettingsFile;
 
         public static AppSettings Load()
         {
             try
             {
-                if (!File.Exists(SettingsFile))
-                    return TryMigrateFromLegacy() ?? new AppSettings();
+                if (File.Exists(SettingsFilePath))
+                    return DeserializeFile(SettingsFilePath) ?? new AppSettings();
 
-                var json = File.ReadAllText(SettingsFile);
-                var settings = Serializer.Deserialize<AppSettings>(json);
-                return settings ?? new AppSettings();
+                var migrated = TryMigrateFromAppData() ?? TryMigrateFromLegacy();
+                return migrated ?? new AppSettings();
             }
             catch
             {
                 return new AppSettings();
-            }
-        }
-
-        /// <summary>Import settings from older GlocGitHelper if present.</summary>
-        private static AppSettings TryMigrateFromLegacy()
-        {
-            try
-            {
-                var legacyFile = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "GlocGitHelper",
-                    "settings.json");
-
-                if (!File.Exists(legacyFile))
-                    return null;
-
-                var json = File.ReadAllText(legacyFile);
-                var settings = Serializer.Deserialize<AppSettings>(json);
-                if (settings == null)
-                    return null;
-
-                Save(settings);
-                return settings;
-            }
-            catch
-            {
-                return null;
             }
         }
 
@@ -78,9 +51,9 @@ namespace WpfAutoGitHelper.Services
             if (settings == null)
                 return;
 
-            Directory.CreateDirectory(SettingsDir);
+            Directory.CreateDirectory(SettingsDirectory);
             var json = Serializer.Serialize(settings);
-            File.WriteAllText(SettingsFile, json);
+            File.WriteAllText(SettingsFilePath, json);
         }
 
         public static void RememberRepo(AppSettings settings, string repoPath)
@@ -95,6 +68,52 @@ namespace WpfAutoGitHelper.Services
             settings.RecentRepoPaths.Insert(0, repoPath);
             if (settings.RecentRepoPaths.Count > 12)
                 settings.RecentRepoPaths = settings.RecentRepoPaths.Take(12).ToList();
+        }
+
+        private static AppSettings TryMigrateFromAppData()
+        {
+            var appDataFile = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "WpfAutoGitHelper",
+                "settings.json");
+
+            return MigrateFromFile(appDataFile);
+        }
+
+        private static AppSettings TryMigrateFromLegacy()
+        {
+            var legacyFile = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "GlocGitHelper",
+                "settings.json");
+
+            return MigrateFromFile(legacyFile);
+        }
+
+        private static AppSettings MigrateFromFile(string sourceFile)
+        {
+            try
+            {
+                if (!File.Exists(sourceFile))
+                    return null;
+
+                var settings = DeserializeFile(sourceFile);
+                if (settings == null)
+                    return null;
+
+                Save(settings);
+                return settings;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static AppSettings DeserializeFile(string path)
+        {
+            var json = File.ReadAllText(path);
+            return Serializer.Deserialize<AppSettings>(json);
         }
     }
 }

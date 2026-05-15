@@ -49,7 +49,7 @@ namespace WpfAutoGitHelper
             Title = _viewModel.Ui.AppTitle;
             ActionsTab.Header = _viewModel.Ui.TabActions;
             IdentityTab.Header = _viewModel.Ui.TabIdentity;
-            FilesTab.Header = _viewModel.Ui.TabFiles;
+            ReleasesTab.Header = _viewModel.Ui.TabReleases;
             LogTab.Header = _viewModel.Ui.TabLog;
             SettingsTab.Header = _viewModel.Ui.TabSettings;
         }

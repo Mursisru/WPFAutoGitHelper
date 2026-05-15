@@ -36,6 +36,7 @@
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Net.Http" />
   </ItemGroup>
@@ -80,13 +81,16 @@
     <Compile Include="Models\ChangedFileEntry.cs" />
     <Compile Include="Models\GitRunResult.cs" />
     <Compile Include="Models\NewRepositoryRequest.cs" />
+    <Compile Include="Models\ReleaseRequest.cs" />
     <Compile Include="Models\TemplateOption.cs" />
     <Compile Include="Models\ThemeOption.cs" />
     <Compile Include="Services\GitHubCliRunner.cs" />
     <Compile Include="Services\GitignoreTemplates.cs" />
     <Compile Include="Services\LicenseTexts.cs" />
     <Compile Include="Services\RepoScaffoldCatalog.cs" />
+    <Compile Include="Services\RepoFileCopy.cs" />
     <Compile Include="Services\RepoScaffoldService.cs" />
+    <Compile Include="Services\AppPaths.cs" />
     <Compile Include="Services\GitRunner.cs" />
     <Compile Include="Services\SettingsStore.cs" />
     <Compile Include="Services\ThemeManager.cs" />

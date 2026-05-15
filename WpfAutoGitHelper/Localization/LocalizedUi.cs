@@ -18,7 +18,6 @@ namespace WpfAutoGitHelper.Localization
         public string ThemeLight => Loc.Get("Theme_Light");
         public string ThemeDark => Loc.Get("Theme_Dark");
         public string SettingsConfirmCommit => Loc.Get("Settings_ConfirmCommit");
-        public string SettingsConfirmRestore => Loc.Get("Settings_ConfirmRestore");
         public string SettingsAutoRefresh => Loc.Get("Settings_AutoRefresh");
         public string BtnClearLog => Loc.Get("Btn_ClearLog");
         public string SettingsAutoSaveHint => Loc.Get("Settings_AutoSaveHint");
@@ -74,14 +73,9 @@ namespace WpfAutoGitHelper.Localization
         public string BtnApplyConfig => Loc.Get("Btn_ApplyConfig");
         public string TipLoadConfig => Loc.Get("Tip_LoadConfig");
         public string TipApplyConfig => Loc.Get("Tip_ApplyConfig");
-        public string FilesHeader => Loc.Get("Files_Header");
-        public string FilesColStatus => Loc.Get("Files_ColStatus");
-        public string FilesColPath => Loc.Get("Files_ColPath");
-        public string BtnRestoreFile => Loc.Get("Btn_RestoreFile");
-        public string TipRestoreFile => Loc.Get("Tip_RestoreFile");
         public string LogHeader => Loc.Get("Log_Header");
         public string TabActions => Loc.Get("Tab_Actions");
-        public string TabFiles => Loc.Get("Tab_Files");
+        public string TabReleases => Loc.Get("Tab_Releases");
         public string TabLog => Loc.Get("Tab_Log");
         public string TabSettings => Loc.Get("Tab_Settings");
         public string Step1Repo => Loc.Get("Step1_Repo");
@@ -98,6 +92,20 @@ namespace WpfAutoGitHelper.Localization
         public string IdentityGlobalHint => Loc.Get("Identity_GlobalHint");
         public string BtnClearIdentity => Loc.Get("Btn_ClearIdentity");
         public string TipClearIdentity => Loc.Get("Tip_ClearIdentity");
+        public string BtnClearWorkflow => Loc.Get("Btn_ClearWorkflow");
+        public string TipClearWorkflow => Loc.Get("Tip_ClearWorkflow");
+        public string ReleasesHeader => Loc.Get("Releases_Header");
+        public string ReleasesHint => Loc.Get("Releases_Hint");
+        public string ReleaseTag => Loc.Get("Release_Tag");
+        public string ReleaseTitle => Loc.Get("Release_Title");
+        public string ReleaseNotes => Loc.Get("Release_Notes");
+        public string ReleaseTarget => Loc.Get("Release_Target");
+        public string ReleaseLatest => Loc.Get("Release_Latest");
+        public string ReleasePrerelease => Loc.Get("Release_Prerelease");
+        public string BtnCreateRelease => Loc.Get("Btn_CreateRelease");
+        public string TipCreateRelease => Loc.Get("Tip_CreateRelease");
+        public string BtnOpenReleases => Loc.Get("Btn_OpenReleases");
+        public string TipOpenReleases => Loc.Get("Tip_OpenReleases");
 
         public void NotifyAllProperties()
         {

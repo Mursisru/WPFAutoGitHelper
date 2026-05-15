@@ -11,7 +11,6 @@ namespace WpfAutoGitHelper.Models
         public string LicenseId { get; set; }
         public bool AddReadme { get; set; }
         public bool IsPrivate { get; set; }
-        public bool CreateOnGitHub { get; set; }
 
         public string FullPath =>
             string.IsNullOrWhiteSpace(ParentDirectory) || string.IsNullOrWhiteSpace(Name)

@@ -49,7 +49,7 @@
                                             ToolTip="{Binding Ui.TipBrowse}" MinWidth="80"/>
                                     <Button Style="{StaticResource PrimaryButtonStyle}"
                                             Content="{Binding Ui.BtnCreateNewRepo}" Command="{Binding CreateNewRepoCommand}"
-                                            ToolTip="{Binding Ui.TipCreateNewRepo}" MinWidth="140"/>
+                                            ToolTip="{Binding Ui.TipCreateNewRepo}" MinWidth="168"/>
                                     <Button Style="{StaticResource PrimaryButtonStyle}"
                                             Content="{Binding Ui.BtnSaveRepo}" Command="{Binding SaveRepoCommand}"
                                             ToolTip="{Binding Ui.TipSaveRepo}" MinWidth="96"/>
@@ -148,6 +148,12 @@
                             </StackPanel>
                         </GroupBox>
 
+                        <Separator Margin="0,12,0,12"/>
+                        <Button Style="{StaticResource SecondaryButtonStyle}"
+                                Content="{Binding Ui.BtnClearWorkflow}" Command="{Binding ClearWorkflowCommand}"
+                                ToolTip="{Binding Ui.TipClearWorkflow}" MinWidth="120"
+                                HorizontalAlignment="Left"/>
+
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -184,30 +190,46 @@
                 </ScrollViewer>
             </TabItem>
 
-            <!-- 3. Files -->
-            <TabItem x:Name="FilesTab" Header="{Binding Ui.TabFiles}">
-                <Grid Margin="4">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <DataGrid Grid.Row="0" Style="{StaticResource AppDataGridStyle}"
-                              ItemsSource="{Binding ChangedFiles}"
-                              SelectedItem="{Binding SelectedFile}"
-                              AutoGenerateColumns="False" IsReadOnly="True"
-                              CanUserAddRows="False" CanUserDeleteRows="False">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Binding="{Binding StatusCode}" Width="60"
-                                                Header="{Binding DataContext.Ui.FilesColStatus, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                            <DataGridTextColumn Binding="{Binding FilePath}" Width="*"
-                                                Header="{Binding DataContext.Ui.FilesColPath, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                    <Button Grid.Row="1" Style="{StaticResource SecondaryButtonStyle}"
-                            HorizontalAlignment="Left" Margin="0,8,0,0"
-                            Content="{Binding Ui.BtnRestoreFile}" Command="{Binding RestoreFileCommand}"
-                            ToolTip="{Binding Ui.TipRestoreFile}"/>
-                </Grid>
+            <!-- 3. Releases -->
+            <TabItem x:Name="ReleasesTab" Header="{Binding Ui.TabReleases}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <GroupBox Style="{StaticResource CardGroupStyle}" Header="{Binding Ui.ReleasesHeader}" Margin="4">
+                        <StackPanel>
+                            <TextBlock Text="{Binding Ui.ReleasesHint}" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource BrushMuted}" FontSize="11" Margin="0,0,0,12"/>
+                            <TextBlock Text="{Binding Ui.ReleaseTag}" Margin="0,0,0,4"
+                                       Foreground="{DynamicResource BrushMuted}"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,10"
+                                     Text="{Binding ReleaseTag, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Text="{Binding Ui.ReleaseTitle}" Margin="0,0,0,4"
+                                       Foreground="{DynamicResource BrushMuted}"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,10"
+                                     Text="{Binding ReleaseTitle, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Text="{Binding Ui.ReleaseNotes}" Margin="0,0,0,4"
+                                       Foreground="{DynamicResource BrushMuted}"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,10"
+                                     Text="{Binding ReleaseNotes, UpdateSourceTrigger=PropertyChanged}"
+                                     AcceptsReturn="True" MinHeight="96" MaxHeight="180"
+                                     TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+                            <TextBlock Text="{Binding Ui.ReleaseTarget}" Margin="0,0,0,4"
+                                       Foreground="{DynamicResource BrushMuted}"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,10"
+                                     Text="{Binding ReleaseTargetBranch, UpdateSourceTrigger=PropertyChanged}"/>
+                            <CheckBox Content="{Binding Ui.ReleaseLatest}" Margin="0,0,0,6"
+                                      IsChecked="{Binding ReleaseLatest}"/>
+                            <CheckBox Content="{Binding Ui.ReleasePrerelease}" Margin="0,0,0,12"
+                                      IsChecked="{Binding ReleasePrerelease}"/>
+                            <WrapPanel>
+                                <Button Style="{StaticResource PrimaryButtonStyle}"
+                                        Content="{Binding Ui.BtnCreateRelease}" Command="{Binding CreateReleaseCommand}"
+                                        ToolTip="{Binding Ui.TipCreateRelease}" MinWidth="140"/>
+                                <Button Style="{StaticResource SecondaryButtonStyle}"
+                                        Content="{Binding Ui.BtnOpenReleases}" Command="{Binding OpenReleasesCommand}"
+                                        ToolTip="{Binding Ui.TipOpenReleases}" MinWidth="160"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </GroupBox>
+                </ScrollViewer>
             </TabItem>
 
             <!-- 4. Log -->
@@ -264,8 +286,6 @@
                             </Grid>
                             <CheckBox Content="{Binding Ui.SettingsConfirmCommit}" Margin="0,0,0,8"
                                       IsChecked="{Binding ConfirmCommit}"/>
-                            <CheckBox Content="{Binding Ui.SettingsConfirmRestore}" Margin="0,0,0,8"
-                                      IsChecked="{Binding ConfirmRestore}"/>
                             <CheckBox Content="{Binding Ui.SettingsAutoRefresh}" Margin="0,0,0,12"
                                       IsChecked="{Binding AutoRefreshOnSaveRepo}"/>
                             <TextBlock Foreground="{DynamicResource BrushMuted}" FontSize="11" TextWrapping="Wrap"

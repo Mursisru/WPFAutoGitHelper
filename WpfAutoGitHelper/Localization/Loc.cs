@@ -57,6 +57,18 @@ namespace WpfAutoGitHelper.Localization
             return key;
         }
 
+        /// <summary>English string for Git metadata (commit messages, etc.) regardless of UI language.</summary>
+        public static string GetEnglish(string key)
+        {
+            if (string.IsNullOrEmpty(key))
+                return "";
+
+            if (TryGetFrom(DefaultLanguage, key, out var value))
+                return value;
+
+            return Get(key);
+        }
+
         public static string Normalize(string code)
         {
             if (string.IsNullOrWhiteSpace(code))

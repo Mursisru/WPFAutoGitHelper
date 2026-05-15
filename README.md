@@ -7,7 +7,7 @@ Small **Windows WPF** app: run common **Git** actions with buttons for **any** l
 - Windows 10/11  
 - [.NET Framework 4.8](https://dotnet.microsoft.com/download/dotnet-framework/net48)  
 - [Git for Windows](https://git-scm.com/download/win) (`git.exe` on PATH)  
-- Optional: [GitHub CLI](https://cli.github.com/) (`gh`) for **Create on GitHub** when making a new repository (`gh auth login`)
+- [GitHub CLI](https://cli.github.com/) (`gh`) and `gh auth login` — for **Create on GitHub…** and **Release publishing**
 
 ## Build
 
@@ -20,6 +20,8 @@ $msbuild = "${env:ProgramFiles}\Microsoft Visual Studio\2022\Community\MSBuild\C
 
 Output: `WpfAutoGitHelper\bin\Release\WpfAutoGitHelper.exe`
 
+Portable data (created on first save): `WpfAutoGitHelper\bin\Release\Data\settings.json` — same folder as the `.exe`.
+
 ## First run
 
 1. Launch `WpfAutoGitHelper.exe`.  
@@ -29,19 +31,19 @@ Output: `WpfAutoGitHelper\bin\Release\WpfAutoGitHelper.exe`
 
 ## Features
 
-- **Workflow:** Pull, Status, Diff, Add all, Commit, Push; branches (create / checkout / push).  
-- **Files** tab: changed files list, discard (`git restore`).  
-- **New repository…** wizard: name, description, `.gitignore`, license, README, public/private; optional `gh repo create` + push.  
+- **Workflow:** Pull, Status, Diff, Add all, Commit, Push; branches (create / checkout / push); **Clear** workflow fields.  
+- **Create on GitHub…** — new repo on GitHub via `gh` (name, description, visibility, `.gitignore`, license, README, local clone + push).  
+- **Release publishing** — `gh release create` with tag, title, notes, target branch, latest / pre-release.  
 - **Explorer** and **GitHub** (when `origin` is GitHub).  
 - **15 languages**, **light/dark** theme, auto-saved settings.  
-- Recent repo paths in `%AppData%\WpfAutoGitHelper\settings.json`.  
-- Migrates settings from legacy `%AppData%\GlocGitHelper\settings.json` on first launch.
+- Auto-generated commit messages are always **English** (`Initial commit`, `Add project files`).  
+- Migrates settings from `%AppData%\WpfAutoGitHelper` or legacy `%AppData%\GlocGitHelper\` into `Data\` beside the exe on first launch.
 
 Passwords and PATs are **not** stored in this app.
 
 ## Settings
 
-`%AppData%\WpfAutoGitHelper\settings.json` — `Language`, `Theme`, `ConfirmCommit`, `ConfirmRestore`, `AutoRefreshOnSaveRepo`, recent paths.
+`Data\settings.json` next to `WpfAutoGitHelper.exe` — `Language`, `Theme`, `ConfirmCommit`, `AutoRefreshOnSaveRepo`, recent repo paths, release fields, last commit message.
 
 ## License
 

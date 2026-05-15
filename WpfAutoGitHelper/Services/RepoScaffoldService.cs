@@ -42,11 +42,18 @@ namespace WpfAutoGitHelper.Services
             if (LicenseTexts.TryGet(request.LicenseId, copyrightHolder, out var license))
                 File.WriteAllText(Path.Combine(path, "LICENSE"), license);
 
+            var wroteAny = !string.IsNullOrWhiteSpace(gitignore)
+                || LicenseTexts.TryGet(request.LicenseId, copyrightHolder, out _);
+
             if (request.AddReadme)
             {
                 var readme = BuildReadme(request.Name, request.Description);
                 File.WriteAllText(Path.Combine(path, "README.md"), readme);
+                wroteAny = true;
             }
+
+            if (!wroteAny)
+                File.WriteAllText(Path.Combine(path, ".gitkeep"), "");
         }
 
         private static string BuildReadme(string name, string description)
