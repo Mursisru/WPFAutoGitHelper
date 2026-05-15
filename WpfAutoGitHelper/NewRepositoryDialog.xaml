@@ -1,0 +1,81 @@
+<Window x:Class="WpfAutoGitHelper.NewRepositoryDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource AppWindowStyle}"
+        Title="{Binding Title}"
+        SizeToContent="Height"
+        Width="520"
+        MinWidth="480"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResizeWithGrip"
+        ShowInTaskbar="False">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="640">
+        <StackPanel Margin="16">
+            <TextBlock Style="{StaticResource HeaderTitleStyle}" Text="{Binding Title}" Margin="0,0,0,12"/>
+
+            <TextBlock Foreground="{DynamicResource BrushMuted}" Text="{Binding LabelName}" Margin="0,0,0,4"/>
+            <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
+
+            <TextBlock Foreground="{DynamicResource BrushMuted}" Text="{Binding LabelDescription}" Margin="0,0,0,4"/>
+            <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+                     AcceptsReturn="True" TextWrapping="Wrap" MinHeight="56" MaxHeight="120"
+                     VerticalScrollBarVisibility="Auto" Margin="0,0,0,10"/>
+
+            <TextBlock Foreground="{DynamicResource BrushMuted}" Text="{Binding LabelParent}" Margin="0,0,0,4"/>
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0" Style="{StaticResource InputTextBoxStyle}"
+                         Text="{Binding ParentDirectory, UpdateSourceTrigger=PropertyChanged}"/>
+                <Button Grid.Column="1" Style="{StaticResource SecondaryButtonStyle}"
+                        Content="{Binding BtnBrowse}" Command="{Binding BrowseParentCommand}"
+                        MinWidth="88" Margin="8,0,0,0"/>
+            </Grid>
+            <TextBlock Foreground="{DynamicResource BrushMuted}" FontSize="11"
+                       Text="{Binding TargetPathHint}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+            <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Foreground="{DynamicResource BrushMuted}" Text="{Binding LabelGitignore}" Margin="0,0,0,4"/>
+                    <ComboBox Style="{StaticResource InputComboBoxStyle}" IsEditable="False"
+                              ItemsSource="{Binding GitignoreOptions}"
+                              SelectedItem="{Binding SelectedGitignore, Mode=TwoWay}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Foreground="{DynamicResource BrushMuted}" Text="{Binding LabelLicense}" Margin="0,0,0,4"/>
+                    <ComboBox Style="{StaticResource InputComboBoxStyle}" IsEditable="False"
+                              ItemsSource="{Binding LicenseOptions}"
+                              SelectedItem="{Binding SelectedLicense, Mode=TwoWay}"/>
+                </StackPanel>
+            </Grid>
+
+            <CheckBox Content="{Binding LabelReadme}" IsChecked="{Binding AddReadme}" Margin="0,0,0,12"/>
+
+            <GroupBox Style="{StaticResource CardGroupStyle}" Header="{Binding LabelVisibility}" Margin="0,0,0,10">
+                <StackPanel>
+                    <RadioButton Content="{Binding VisibilityPublic}" IsChecked="{Binding IsPublic}" GroupName="Visibility" Margin="0,2"/>
+                    <RadioButton Content="{Binding VisibilityPrivate}" IsChecked="{Binding IsPrivate}" GroupName="Visibility" Margin="0,2"/>
+                </StackPanel>
+            </GroupBox>
+
+            <CheckBox Content="{Binding LabelGitHub}" IsChecked="{Binding CreateOnGitHub}"
+                      IsEnabled="{Binding GhAvailable}" Margin="0,0,0,4"/>
+            <TextBlock Foreground="{DynamicResource BrushMuted}" FontSize="11"
+                       Text="{Binding GhHint}" TextWrapping="Wrap" Margin="0,0,0,16"/>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Style="{StaticResource SecondaryButtonStyle}" Content="{Binding BtnCancel}"
+                        IsCancel="True" MinWidth="96" Margin="0,0,8,0"/>
+                <Button Style="{StaticResource PrimaryButtonStyle}" Content="{Binding BtnCreate}"
+                        IsDefault="True" Click="Create_Click" MinWidth="120"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Window>
