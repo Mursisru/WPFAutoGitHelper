@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Threading;
 using WpfAutoGitHelper.Localization;
 using WpfAutoGitHelper.Services;
+using WpfAutoGitHelper.Views;
 
 namespace WpfAutoGitHelper
 {
@@ -46,11 +47,15 @@ namespace WpfAutoGitHelper
 
         private static void ShowFatal(Exception ex)
         {
-            MessageBox.Show(
-                ex.ToString(),
-                "WPF Auto Git Helper — startup error",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+            try
+            {
+                var window = new FatalErrorWindow(ex.ToString());
+                window.ShowDialog();
+            }
+            catch
+            {
+                // Last resort if themed window cannot load.
+            }
         }
     }
 }

@@ -23,6 +23,10 @@ namespace WpfAutoGitHelper.Localization
         public string SettingsConfirmCommit => Loc.Get("Settings_ConfirmCommit");
         public string SettingsAutoRefresh => Loc.Get("Settings_AutoRefresh");
         public string BtnClearLog => Loc.Get("Btn_ClearLog");
+        public string BtnDialogOk => Loc.Get("Btn_DialogOk");
+        public string BtnDialogCancel => Loc.Get("Btn_DialogCancel");
+        public string BtnDialogYes => Loc.Get("Btn_DialogYes");
+        public string BtnDialogNo => Loc.Get("Btn_DialogNo");
         public string SettingsAutoSaveHint => Loc.Get("Settings_AutoSaveHint");
         public string RepoHeader => Loc.Get("Repo_Header");
         public string RepoHint => Loc.Get("Repo_Hint");

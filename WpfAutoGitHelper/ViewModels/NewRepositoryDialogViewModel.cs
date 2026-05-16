@@ -20,6 +20,7 @@ namespace WpfAutoGitHelper.ViewModels
         private TemplateOption _selectedLicense;
         private bool _addReadme = true;
         private bool _isPublic = true;
+        private string _validationMessage = "";
 
         public NewRepositoryDialogViewModel(string initialParentDirectory)
         {
@@ -43,6 +44,27 @@ namespace WpfAutoGitHelper.ViewModels
         public bool GhAvailable { get; }
 
         public bool CanCreate => GhAvailable;
+
+        public string ValidationMessage => _validationMessage;
+
+        public bool HasValidationMessage => !string.IsNullOrWhiteSpace(_validationMessage);
+
+        public void SetValidationError(string message)
+        {
+            _validationMessage = message ?? "";
+            OnPropertyChanged(nameof(ValidationMessage));
+            OnPropertyChanged(nameof(HasValidationMessage));
+        }
+
+        public void ClearValidationError()
+        {
+            if (string.IsNullOrEmpty(_validationMessage))
+                return;
+
+            _validationMessage = "";
+            OnPropertyChanged(nameof(ValidationMessage));
+            OnPropertyChanged(nameof(HasValidationMessage));
+        }
 
         public string Title => Loc.Get("Dlg_NewRepo_Title");
 
@@ -69,6 +91,7 @@ namespace WpfAutoGitHelper.ViewModels
                 if (_parentDirectory == value)
                     return;
                 _parentDirectory = value;
+                ClearValidationError();
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(TargetPathHint));
             }
@@ -82,6 +105,7 @@ namespace WpfAutoGitHelper.ViewModels
                 if (_name == value)
                     return;
                 _name = value;
+                ClearValidationError();
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(TargetPathHint));
             }

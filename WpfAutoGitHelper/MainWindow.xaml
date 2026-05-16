@@ -3,8 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Style="{StaticResource AppWindowStyle}"
         Title="{Binding Ui.AppTitle}"
-        Height="740" Width="980" MinHeight="500" MinWidth="680">
+        Height="740" Width="980"         MinHeight="500" MinWidth="680">
     <Grid Margin="14">
+        <Grid x:Name="MainContentGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -41,7 +42,8 @@
             </WrapPanel>
         </Border>
 
-        <TabControl Grid.Row="2" Style="{StaticResource MainTabControlStyle}">
+        <TabControl Grid.Row="2" Style="{StaticResource MainTabControlStyle}"
+                    SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}">
 
             <!-- 1. Actions workflow -->
             <TabItem x:Name="ActionsTab" Header="{Binding Ui.TabActions}">
@@ -360,5 +362,47 @@
             </TabItem>
 
         </TabControl>
+        </Grid>
+
+        <Grid Panel.ZIndex="20"
+              Visibility="{Binding IsDialogOpen, Converter={StaticResource BoolToVis}}">
+            <Border Style="{StaticResource AppDialogScrimStyle}"/>
+            <Border Style="{StaticResource AppDialogPanelStyle}"
+                    VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Margin="24" MinWidth="360">
+                <StackPanel>
+                    <TextBlock Text="{Binding DialogTitle}" Style="{StaticResource HeaderTitleStyle}"
+                               FontSize="16" Margin="0,0,0,10"/>
+                    <TextBlock Text="{Binding DialogMessage}" TextWrapping="Wrap" LineHeight="20"
+                               Foreground="{DynamicResource BrushText}" Margin="0,0,0,12"/>
+                    <TextBox Style="{StaticResource InputTextBoxStyle}"
+                             Text="{Binding DialogInputText, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,14"
+                             Visibility="{Binding DialogShowInput, Converter={StaticResource BoolToVis}}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource SecondaryButtonStyle}"
+                                Content="{Binding Ui.BtnDialogCancel}" MinWidth="88" Margin="0,0,8,0"
+                                Command="{Binding DialogCancelCommand}" IsCancel="True"
+                                Visibility="{Binding DialogShowInput, Converter={StaticResource BoolToVis}}"/>
+                        <Button Style="{StaticResource SecondaryButtonStyle}"
+                                Content="{Binding Ui.BtnDialogNo}" MinWidth="88" Margin="0,0,8,0"
+                                Command="{Binding DialogNoCommand}" IsCancel="True"
+                                Visibility="{Binding DialogShowYesNo, Converter={StaticResource BoolToVis}}"/>
+                        <Button Style="{StaticResource PrimaryButtonStyle}"
+                                Content="{Binding Ui.BtnDialogYes}" MinWidth="88" Margin="0,0,8,0"
+                                Command="{Binding DialogYesCommand}" IsDefault="True"
+                                Visibility="{Binding DialogShowYesNo, Converter={StaticResource BoolToVis}}"/>
+                        <Button Style="{StaticResource PrimaryButtonStyle}"
+                                Content="{Binding Ui.BtnDialogOk}" MinWidth="88"
+                                Command="{Binding DialogOkCommand}" IsDefault="True"
+                                Visibility="{Binding DialogShowOkOnly, Converter={StaticResource BoolToVis}}"/>
+                        <Button Style="{StaticResource PrimaryButtonStyle}"
+                                Content="{Binding Ui.BtnDialogOk}" MinWidth="88"
+                                Command="{Binding DialogOkCommand}" IsDefault="True"
+                                Visibility="{Binding DialogShowInput, Converter={StaticResource BoolToVis}}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

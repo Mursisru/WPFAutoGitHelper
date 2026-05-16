@@ -22,13 +22,11 @@ namespace WpfAutoGitHelper
             var vm = (NewRepositoryDialogViewModel)DataContext;
             if (!vm.TryBuildRequest(out var request, out var errorKey))
             {
-                MessageBox.Show(
-                    Loc.Get(errorKey),
-                    vm.Title,
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                vm.SetValidationError(Loc.Get(errorKey));
                 return;
             }
+
+            vm.ClearValidationError();
 
             Result = request;
             DialogResult = true;

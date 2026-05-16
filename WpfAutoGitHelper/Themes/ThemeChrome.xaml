@@ -298,6 +298,20 @@
         <Setter Property="Margin" Value="0,8,0,0"/>
     </Style>
 
+    <Style x:Key="AppDialogPanelStyle" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource BrushCardBg}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="18"/>
+        <Setter Property="MaxWidth" Value="520"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+    </Style>
+
+    <Style x:Key="AppDialogScrimStyle" TargetType="Border">
+        <Setter Property="Background" Value="#99000000"/>
+    </Style>
+
     <Style x:Key="SettingsPanelStyle" TargetType="Border">
         <Setter Property="Background" Value="{DynamicResource BrushCardBg}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>

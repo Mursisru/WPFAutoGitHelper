@@ -16,7 +16,7 @@ using WpfAutoGitHelper.Services;
 
 namespace WpfAutoGitHelper.ViewModels
 {
-    public sealed class MainViewModel : INotifyPropertyChanged
+    public sealed partial class MainViewModel : INotifyPropertyChanged
     {
         private const string UnknownBranch = "-";
 
@@ -89,7 +89,7 @@ namespace WpfAutoGitHelper.ViewModels
 
             BrowseRepoCommand = new RelayCommand(BrowseRepo);
             CreateNewRepoCommand = new RelayCommand(async () => await CreateNewRepoAsync(), () => !IsBusy);
-            SaveRepoCommand = new RelayCommand(SaveRepo, () => !IsBusy);
+            SaveRepoCommand = new RelayCommand(async () => await SaveRepoAsync(), () => !IsBusy);
             OpenFolderCommand = new RelayCommand(OpenFolder, () => HasValidRepo && !IsBusy);
             OpenGitHubCommand = new RelayCommand(async () => await OpenGitHubAsync(), () => HasValidRepo && !IsBusy);
             RefreshStatusCommand = new RelayCommand(async () => await RefreshStatusAsync(), () => HasValidRepo && !IsBusy);
@@ -100,12 +100,12 @@ namespace WpfAutoGitHelper.ViewModels
             PushCommand = new RelayCommand(async () => await PushAsync(), () => HasValidRepo && !IsBusy);
             SyncToGitHubCommand = new RelayCommand(async () => await SyncToGitHubAsync(), () => HasValidRepo && !IsBusy);
             ConfigureOriginCommand = new RelayCommand(async () => await ConfigureOriginAsync(), () => HasValidRepo && !IsBusy);
-            ClearWorkflowCommand = new RelayCommand(ClearWorkflow, () => !IsBusy);
+            ClearWorkflowCommand = new RelayCommand(async () => await ClearWorkflowAsync(), () => !IsBusy);
             CreateReleaseCommand = new RelayCommand(async () => await CreateReleaseAsync(), () => HasValidRepo && !IsBusy);
             OpenReleasesCommand = new RelayCommand(async () => await OpenReleasesPageAsync(), () => HasValidRepo && !IsBusy);
             AddReleaseAssetsCommand = new RelayCommand(AddReleaseAssets, () => !IsBusy);
             RemoveReleaseAssetCommand = new RelayCommand(RemoveSelectedReleaseAsset, () => !IsBusy && SelectedReleaseAsset != null);
-            AddReleaseBuildOutputCommand = new RelayCommand(AddReleaseBuildOutput, () => HasValidRepo && !IsBusy);
+            AddReleaseBuildOutputCommand = new RelayCommand(async () => await AddReleaseBuildOutputAsync(), () => HasValidRepo && !IsBusy);
             LoadGitConfigCommand = new RelayCommand(async () => await LoadGitConfigAsync(), () => !IsBusy);
             ApplyGitConfigCommand = new RelayCommand(async () => await ApplyGitConfigAsync(), () => !IsBusy);
             ClearIdentityCommand = new RelayCommand(async () => await ClearGitIdentityAsync(), () => !IsBusy);
@@ -113,6 +113,8 @@ namespace WpfAutoGitHelper.ViewModels
             CheckoutBranchCommand = new RelayCommand(async () => await CheckoutBranchAsync(), () => HasValidRepo && !IsBusy && !string.IsNullOrWhiteSpace(SelectedBranch));
             PushBranchCommand = new RelayCommand(async () => await PushBranchAsync(), () => HasValidRepo && !IsBusy);
             ClearLogCommand = new RelayCommand(ClearLog, () => !string.IsNullOrEmpty(LogText));
+
+            InitAppDialogCommands();
 
             _persistSettingsEnabled = true;
             PersistSettings();
@@ -669,7 +671,7 @@ namespace WpfAutoGitHelper.ViewModels
         {
             if (!GitHubCliRunner.IsAvailable())
             {
-                MessageBox.Show(Loc.Get("Msg_NewRepo_GhRequired"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                await NotifyAsync(Loc.Get("Msg_NewRepo_GhRequired")).ConfigureAwait(true);
                 return;
             }
 
@@ -692,11 +694,7 @@ namespace WpfAutoGitHelper.ViewModels
 
             if (Directory.Exists(path) && GitRunner.IsGitRepository(path))
             {
-                if (MessageBox.Show(
-                        Loc.Get("Msg_FolderAlreadyGit"),
-                        Caption,
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Question) != MessageBoxResult.Yes)
+                if (!await ConfirmAsync(Loc.Get("Msg_FolderAlreadyGit")).ConfigureAwait(true))
                     return;
 
                 RepoPath = path;
@@ -713,7 +711,7 @@ namespace WpfAutoGitHelper.ViewModels
             {
                 if (!await GitHubCliRunner.IsAuthenticatedAsync(token).ConfigureAwait(true))
                 {
-                    MessageBox.Show(Loc.Get("Msg_GhNotAuthenticated"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                    await NotifyAsync(Loc.Get("Msg_GhNotAuthenticated")).ConfigureAwait(true);
                     return;
                 }
 
@@ -743,7 +741,7 @@ namespace WpfAutoGitHelper.ViewModels
 
                 if (!await EnsureInitialCommitAsync(path, token))
                 {
-                    MessageBox.Show(Loc.Get("Msg_NewRepo_NoCommits"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                    await NotifyAsync(Loc.Get("Msg_NewRepo_NoCommits")).ConfigureAwait(true);
                     return;
                 }
 
@@ -752,11 +750,9 @@ namespace WpfAutoGitHelper.ViewModels
                 LogResult(gh, "gh repo create");
                 if (!gh.Success)
                 {
-                    MessageBox.Show(
+                    await NotifyAsync(
                         gh.StandardError + "\n\n" + Loc.Get("Msg_NewRepo_GhFailedHint"),
-                        Caption,
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        isError: true).ConfigureAwait(true);
                     RepoPath = path;
                     FinishNewRepoSetup(path);
                     await RefreshStatusAsync();
@@ -774,14 +770,10 @@ namespace WpfAutoGitHelper.ViewModels
                 RepoPath = path;
                 FinishNewRepoSetup(path);
 
-                if (MessageBox.Show(
-                        Loc.Get("Msg_AddFolderNow"),
-                        Caption,
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Question) == MessageBoxResult.Yes)
+                if (await ConfirmAsync(Loc.Get("Msg_AddFolderNow")).ConfigureAwait(true))
                 {
                     await CopyFolderIntoRepoAsync(path);
-                    if (await EnsureOriginRemoteAsync())
+                    if (await EnsureOriginRemoteAsync(forcePrompt: true).ConfigureAwait(true))
                     {
                         var pushBranch = await ResolveCurrentBranchNameAsync(path, token);
                         await RunGitInDirectoryLoggedAsync(path, token, "push", "-u", "origin", pushBranch);
@@ -817,7 +809,7 @@ namespace WpfAutoGitHelper.ViewModels
 
             if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(email))
             {
-                MessageBox.Show(Loc.Get("Msg_NeedIdentityForCommit"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                await NotifyAsync(Loc.Get("Msg_NeedIdentityForCommit")).ConfigureAwait(true);
                 return false;
             }
 
@@ -856,7 +848,7 @@ namespace WpfAutoGitHelper.ViewModels
                 combined.IndexOf("user.email", StringComparison.OrdinalIgnoreCase) >= 0 ||
                 combined.IndexOf("who you are", StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                MessageBox.Show(Loc.Get("Msg_NeedIdentityForCommit"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                await NotifyAsync(Loc.Get("Msg_NeedIdentityForCommit")).ConfigureAwait(true);
                 return false;
             }
 
@@ -895,7 +887,7 @@ namespace WpfAutoGitHelper.ViewModels
             var sourceDir = Path.GetFullPath(dlg.SelectedPath.Trim());
             if (string.Equals(sourceDir.TrimEnd('\\', '/'), repoPath.TrimEnd('\\', '/'), StringComparison.OrdinalIgnoreCase))
             {
-                MessageBox.Show(Loc.Get("Msg_CopySameFolder"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                await NotifyAsync(Loc.Get("Msg_CopySameFolder")).ConfigureAwait(true);
                 return;
             }
 
@@ -952,15 +944,10 @@ namespace WpfAutoGitHelper.ViewModels
                 ? "https://github.com/user/repo.git"
                 : currentUrl;
 
-            var url = Microsoft.VisualBasic.Interaction.InputBox(
-                Loc.Get("Dlg_RemoteUrlPrompt"),
-                forcePrompt ? Loc.Get("Dlg_ConfirmRemoteTitle") : Loc.Get("Dlg_AddRemoteTitle"),
-                defaultUrl);
-
+            var title = forcePrompt ? Loc.Get("Dlg_ConfirmRemoteTitle") : Loc.Get("Dlg_AddRemoteTitle");
+            var url = await PromptInputAsync(Loc.Get("Dlg_RemoteUrlPrompt"), title, defaultUrl).ConfigureAwait(true);
             if (string.IsNullOrWhiteSpace(url))
                 return false;
-
-            url = url.Trim();
             if (!string.IsNullOrEmpty(currentUrl) &&
                 string.Equals(url, currentUrl, StringComparison.OrdinalIgnoreCase))
                 return true;
@@ -1002,12 +989,12 @@ namespace WpfAutoGitHelper.ViewModels
             await RefreshStatusAsync();
         }
 
-        private void SaveRepo()
+        private async Task SaveRepoAsync()
         {
             ValidateRepo();
             if (!HasValidRepo)
             {
-                MessageBox.Show(Loc.Get("Msg_NoGitFolder"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                await NotifyAsync(Loc.Get("Msg_NoGitFolder")).ConfigureAwait(true);
                 return;
             }
 
@@ -1045,7 +1032,7 @@ namespace WpfAutoGitHelper.ViewModels
 
             if (string.IsNullOrWhiteSpace(url))
             {
-                MessageBox.Show(Loc.Get("Msg_NoGitHub"), Caption, MessageBoxButton.OK, MessageBoxImage.Information);
+                await NotifyAsync(Loc.Get("Msg_NoGitHub")).ConfigureAwait(true);
                 return;
             }
 
@@ -1111,12 +1098,12 @@ namespace WpfAutoGitHelper.ViewModels
         {
             if (string.IsNullOrWhiteSpace(CommitMessage))
             {
-                MessageBox.Show(Loc.Get("Msg_EnterCommit"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                await NotifyAsync(Loc.Get("Msg_EnterCommit")).ConfigureAwait(true);
                 return;
             }
 
             if (ConfirmCommit &&
-                MessageBox.Show(Loc.Get("Msg_ConfirmCommit"), Loc.Get("Dlg_Commit"), MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+                !await ConfirmAsync(Loc.Get("Msg_ConfirmCommit"), Loc.Get("Dlg_Commit")).ConfigureAwait(true))
                 return;
 
             _settings.LastCommitMessage = CommitMessage;
@@ -1136,7 +1123,7 @@ namespace WpfAutoGitHelper.ViewModels
             if (branch == null)
                 return;
 
-            if (!await EnsureOriginRemoteAsync())
+            if (!await EnsureOriginRemoteAsync(forcePrompt: true).ConfigureAwait(true))
                 return;
 
             AppendLog(Loc.Get("Msg_SyncStarting"));
@@ -1160,11 +1147,7 @@ namespace WpfAutoGitHelper.ViewModels
 
             if (!await TryAutoCommitAllAsync())
             {
-                MessageBox.Show(
-                    Loc.Get("Msg_SyncFailed"),
-                    Caption,
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                await NotifyAsync(Loc.Get("Msg_SyncFailed"), isError: true).ConfigureAwait(true);
                 await RefreshStatusAsync();
                 return;
             }
@@ -1188,13 +1171,7 @@ namespace WpfAutoGitHelper.ViewModels
 
             AppendLog(Loc.Get("Msg_SyncSuccess"));
             if (showSuccessDialog)
-            {
-                MessageBox.Show(
-                    Loc.Get("Msg_SyncSuccess"),
-                    Caption,
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
-            }
+                await NotifyAsync(Loc.Get("Msg_SyncSuccess")).ConfigureAwait(true);
 
             await RefreshStatusAsync();
         }
@@ -1203,19 +1180,11 @@ namespace WpfAutoGitHelper.ViewModels
         {
             if (await HasMergeConflictsInTreeAsync())
             {
-                MessageBox.Show(
-                    Loc.Get("Msg_SyncConflict"),
-                    Caption,
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                await NotifyAsync(Loc.Get("Msg_SyncConflict"), isError: true).ConfigureAwait(true);
                 return;
             }
 
-            MessageBox.Show(
-                Loc.Get("Msg_SyncFailed"),
-                Caption,
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
+            await NotifyAsync(Loc.Get("Msg_SyncFailed"), isError: true).ConfigureAwait(true);
         }
 
         private async Task<string> ResolveWorkingBranchAsync()
@@ -1230,7 +1199,7 @@ namespace WpfAutoGitHelper.ViewModels
                 return CurrentBranch;
             }
 
-            MessageBox.Show(Loc.Get("Msg_NoBranch"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+            await NotifyAsync(Loc.Get("Msg_NoBranch"), isError: true).ConfigureAwait(true);
             return null;
         }
 
@@ -1472,13 +1441,9 @@ namespace WpfAutoGitHelper.ViewModels
                 || text.IndexOf("Updates were rejected", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
-        private void ClearWorkflow()
+        private async Task ClearWorkflowAsync()
         {
-            if (MessageBox.Show(
-                    Loc.Get("Msg_ConfirmClearWorkflow"),
-                    Loc.Get("Dlg_ClearWorkflow"),
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question) != MessageBoxResult.Yes)
+            if (!await ConfirmAsync(Loc.Get("Msg_ConfirmClearWorkflow"), Loc.Get("Dlg_ClearWorkflow")).ConfigureAwait(true))
                 return;
 
             RepoPath = "";
@@ -1496,13 +1461,13 @@ namespace WpfAutoGitHelper.ViewModels
         {
             if (!GitHubCliRunner.IsAvailable())
             {
-                MessageBox.Show(Loc.Get("Msg_ReleaseGhRequired"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                await NotifyAsync(Loc.Get("Msg_ReleaseGhRequired")).ConfigureAwait(true);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(ReleaseTag))
             {
-                MessageBox.Show(Loc.Get("Msg_ReleaseTagRequired"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                await NotifyAsync(Loc.Get("Msg_ReleaseTagRequired")).ConfigureAwait(true);
                 return;
             }
 
@@ -1512,11 +1477,11 @@ namespace WpfAutoGitHelper.ViewModels
 
             if (ReleaseLatest && ReleasePrerelease)
             {
-                MessageBox.Show(Loc.Get("Msg_ReleaseLatestPrereleaseConflict"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                await NotifyAsync(Loc.Get("Msg_ReleaseLatestPrereleaseConflict")).ConfigureAwait(true);
                 return;
             }
 
-            if (!await EnsureOriginRemoteAsync().ConfigureAwait(true))
+            if (!await EnsureOriginRemoteAsync(forcePrompt: true).ConfigureAwait(true))
                 return;
 
             var request = new ReleaseRequest
@@ -1542,11 +1507,7 @@ namespace WpfAutoGitHelper.ViewModels
                 if (result.Success)
                 {
                     PersistReleaseAssets();
-                    MessageBox.Show(
-                        string.Format(Loc.Get("Msg_ReleaseCreated"), request.Tag),
-                        Caption,
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                    await NotifyAsync(string.Format(Loc.Get("Msg_ReleaseCreated"), request.Tag)).ConfigureAwait(true);
                 }
             }
             finally
@@ -1578,7 +1539,7 @@ namespace WpfAutoGitHelper.ViewModels
                 PersistReleaseAssets();
         }
 
-        private void AddReleaseBuildOutput()
+        private async Task AddReleaseBuildOutputAsync()
         {
             var added = 0;
             foreach (var path in GetDefaultReleaseBuildPaths())
@@ -1589,7 +1550,7 @@ namespace WpfAutoGitHelper.ViewModels
 
             if (added == 0)
             {
-                MessageBox.Show(Loc.Get("Msg_ReleaseBuildNotFound"), Caption, MessageBoxButton.OK, MessageBoxImage.Information);
+                await NotifyAsync(Loc.Get("Msg_ReleaseBuildNotFound")).ConfigureAwait(true);
                 return;
             }
 
@@ -1680,7 +1641,7 @@ namespace WpfAutoGitHelper.ViewModels
 
             if (string.IsNullOrWhiteSpace(url))
             {
-                MessageBox.Show(Loc.Get("Msg_NoGitHub"), Caption, MessageBoxButton.OK, MessageBoxImage.Information);
+                await NotifyAsync(Loc.Get("Msg_NoGitHub")).ConfigureAwait(true);
                 return;
             }
 
@@ -1703,7 +1664,7 @@ namespace WpfAutoGitHelper.ViewModels
         {
             if (string.IsNullOrWhiteSpace(UserName) && string.IsNullOrWhiteSpace(UserEmail))
             {
-                MessageBox.Show(Loc.Get("Msg_EnterNameEmail"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                await NotifyAsync(Loc.Get("Msg_EnterNameEmail")).ConfigureAwait(true);
                 return;
             }
 
@@ -1716,11 +1677,7 @@ namespace WpfAutoGitHelper.ViewModels
 
         private async Task ClearGitIdentityAsync()
         {
-            if (MessageBox.Show(
-                    Loc.Get("Msg_ConfirmClearIdentity"),
-                    Loc.Get("Dlg_ClearIdentity"),
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            if (!await ConfirmAsync(Loc.Get("Msg_ConfirmClearIdentity"), Loc.Get("Dlg_ClearIdentity")).ConfigureAwait(true))
                 return;
 
             await RunGitQuietAsync("config", "--global", "--unset", "user.name");
@@ -1735,7 +1692,7 @@ namespace WpfAutoGitHelper.ViewModels
         {
             if (string.IsNullOrWhiteSpace(NewBranchName))
             {
-                MessageBox.Show(Loc.Get("Msg_EnterBranchName"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                await NotifyAsync(Loc.Get("Msg_EnterBranchName")).ConfigureAwait(true);
                 return;
             }
 
@@ -1758,11 +1715,11 @@ namespace WpfAutoGitHelper.ViewModels
             var branch = !string.IsNullOrWhiteSpace(SelectedBranch) ? SelectedBranch.Trim() : CurrentBranch;
             if (branch == UnknownBranch || string.IsNullOrWhiteSpace(branch))
             {
-                MessageBox.Show(Loc.Get("Msg_SelectBranch"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+                await NotifyAsync(Loc.Get("Msg_SelectBranch")).ConfigureAwait(true);
                 return;
             }
 
-            if (!await EnsureOriginRemoteAsync())
+            if (!await EnsureOriginRemoteAsync(forcePrompt: true).ConfigureAwait(true))
                 return;
 
             await RunGitLoggedAsync("fetch", "origin");

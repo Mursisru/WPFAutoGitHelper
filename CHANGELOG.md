@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.4 — 2026-05-16
+
+### Changed
+- **Origin URL** is requested on every **Push**, **Sync to GitHub**, **Push branch**, and **Create release** (in-app dialog, not only when remote is missing).
+- **All messages** (errors, confirmations, URL input) are shown **inside the app** — no system MessageBox or VB InputBox.
+
+### Added
+- In-app dialog overlay (OK, Yes/No, text field for remote URL).
+- Startup/fatal error window in the application theme.
+
 ## 1.4.3 — 2026-05-16
 
 ### Fixed

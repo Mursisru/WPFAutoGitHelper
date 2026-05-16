@@ -9,6 +9,9 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResizeWithGrip"
         ShowInTaskbar="False">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Window.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="640">
         <StackPanel Margin="16">
             <TextBlock Style="{StaticResource HeaderTitleStyle}" Text="{Binding Title}" Margin="0,0,0,8"/>
@@ -59,6 +62,11 @@
             </Grid>
 
             <CheckBox Content="{Binding LabelReadme}" IsChecked="{Binding AddReadme}" Margin="0,0,0,10"/>
+
+            <TextBlock Foreground="{DynamicResource BrushAccent}" FontWeight="SemiBold"
+                       Text="{Binding ValidationMessage}" TextWrapping="Wrap"
+                       Margin="0,0,0,10"
+                       Visibility="{Binding HasValidationMessage, Converter={StaticResource BoolToVis}}"/>
 
             <GroupBox Style="{StaticResource CardGroupStyle}" Header="{Binding LabelVisibility}" Margin="0,0,0,16">
                 <StackPanel>

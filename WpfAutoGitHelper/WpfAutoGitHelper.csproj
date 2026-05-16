@@ -36,7 +36,6 @@
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System.Windows.Forms" />
-    <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Net.Http" />
   </ItemGroup>
@@ -53,6 +52,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="NewRepositoryDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\FatalErrorWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -82,6 +85,9 @@
     <Compile Include="NewRepositoryDialog.xaml.cs">
       <DependentUpon>NewRepositoryDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\FatalErrorWindow.xaml.cs">
+      <DependentUpon>FatalErrorWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Localization\Loc.cs" />
     <Compile Include="Localization\LocResources.cs" />
     <Compile Include="Localization\LocResourcesMore.cs" />
@@ -107,7 +113,9 @@
     <Compile Include="Services\GitRunner.cs" />
     <Compile Include="Services\SettingsStore.cs" />
     <Compile Include="Services\ThemeManager.cs" />
+    <Compile Include="ViewModels\AppDialogMode.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
+    <Compile Include="ViewModels\MainViewModel.AppDialog.cs" />
     <Compile Include="ViewModels\NewRepositoryDialogViewModel.cs" />
     <Compile Include="ViewModels\RelayCommand.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
