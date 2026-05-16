@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.4.3 — 2026-05-16
+
+### Fixed
+- **Card headers** (all tabs): removed top gap/misaligned header strip — header is flush with the card border (`ClipToBounds`, no inner top margin).
+
+### Added
+- **7 more accent colors:** red, cyan, lime, indigo, pink, gold, sky (14 total).
+- **6 more backgrounds:** stone, ocean, plum, dusk, slate, cherry (13 total).
+
+## 1.4.2 — 2026-05-16
+
+### Fixed
+- **Freeze when changing theme or accent** — removed infinite loop (`AccentChanged` / `ThemeChanged` handlers re-applied appearance recursively).
+
+### Added
+- **Background** color picker in Settings (default, cool, warm, mint, navy, graphite, espresso) — tints panels and cards per theme mode.
+
+## 1.4.1 — 2026-05-16
+
+### Added
+- **Accent color** picker in Settings (blue, teal, green, orange, purple, rose, amber) — applies to tabs, buttons, branch badge, and scrollbar thumb when dragging.
+
+### Changed
+- Active tab underline spans the **full tab width**; tab borders are **thicker** (2px).
+- **Current branch** status panel has a visible accent border (2px).
+- **Scrollbars** styled to match the theme (slim track, rounded thumb, accent on drag).
+
+## 1.4.0 — 2026-05-16
+
+### Changed
+- **Tab order:** Release publishing now comes before Git identity.
+- **UI redesign** for Light, Dark, and Black themes: shared chrome, accent cards, pill branch badge, refined tabs with accent underline, improved inputs and buttons.
+
 ## 1.3.1 — 2026-05-16
 
 ### Fixed

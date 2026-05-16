@@ -35,6 +35,8 @@ namespace WpfAutoGitHelper.ViewModels
         private bool _hasValidRepo;
         private string _selectedLanguageCode = Loc.DefaultLanguage;
         private string _selectedThemeId = ThemeManager.Light;
+        private string _selectedAccentId = AccentPalette.DefaultId;
+        private string _selectedBackgroundId = BackgroundPalette.DefaultId;
         private bool _confirmCommit = true;
         private bool _autoRefreshOnSaveRepo = true;
         private string _releaseTag = "";
@@ -54,6 +56,8 @@ namespace WpfAutoGitHelper.ViewModels
             RepoPath = _settings.RepoPath ?? "";
             CommitMessage = _settings.LastCommitMessage ?? "";
             SelectedThemeId = string.IsNullOrWhiteSpace(_settings.Theme) ? ThemeManager.Light : _settings.Theme;
+            _selectedAccentId = AccentPalette.NormalizeId(_settings.AccentColor);
+            _selectedBackgroundId = BackgroundPalette.NormalizeId(_settings.BackgroundColor);
             ConfirmCommit = _settings.ConfirmCommit;
             AutoRefreshOnSaveRepo = _settings.AutoRefreshOnSaveRepo;
             ReleaseTag = _settings.LastReleaseTag ?? "";
@@ -74,10 +78,14 @@ namespace WpfAutoGitHelper.ViewModels
             Loc.LanguageChanged += OnLanguageChanged;
             _selectedLanguageCode = Loc.Normalize(_settings.Language);
             Loc.ApplyLanguage(_selectedLanguageCode);
-            ThemeManager.Apply(SelectedThemeId);
             RefreshThemeOptions();
+            RefreshAccentOptions();
+            RefreshBackgroundOptions();
+            ApplyAppearance();
             OnPropertyChanged(nameof(SelectedLanguage));
             OnPropertyChanged(nameof(SelectedTheme));
+            OnPropertyChanged(nameof(SelectedAccent));
+            OnPropertyChanged(nameof(SelectedBackground));
 
             BrowseRepoCommand = new RelayCommand(BrowseRepo);
             CreateNewRepoCommand = new RelayCommand(async () => await CreateNewRepoAsync(), () => !IsBusy);
@@ -122,6 +130,8 @@ namespace WpfAutoGitHelper.ViewModels
             new ObservableCollection<LanguageOption>(Loc.AvailableLanguages);
 
         public ObservableCollection<ThemeOption> Themes { get; } = new ObservableCollection<ThemeOption>();
+        public ObservableCollection<AccentColorOption> AccentColors { get; } = new ObservableCollection<AccentColorOption>();
+        public ObservableCollection<BackgroundColorOption> BackgroundColors { get; } = new ObservableCollection<BackgroundColorOption>();
 
         private async Task SafeRefreshOnStartupAsync()
         {
@@ -209,7 +219,7 @@ namespace WpfAutoGitHelper.ViewModels
                     return;
 
                 _selectedThemeId = themeId;
-                ThemeManager.Apply(themeId);
+                ApplyAppearance();
                 OnPropertyChanged(nameof(SelectedThemeId));
                 OnPropertyChanged(nameof(SelectedTheme));
                 PersistSettings();
@@ -226,9 +236,101 @@ namespace WpfAutoGitHelper.ViewModels
                     return;
 
                 _selectedThemeId = theme;
-                ThemeManager.Apply(theme);
+                ApplyAppearance();
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(SelectedTheme));
+                PersistSettings();
+            }
+        }
+
+        public AccentColorOption SelectedAccent
+        {
+            get
+            {
+                foreach (var accent in AccentColors)
+                {
+                    if (string.Equals(accent.Id, _selectedAccentId, StringComparison.OrdinalIgnoreCase))
+                        return accent;
+                }
+
+                return AccentColors.Count > 0 ? AccentColors[0] : null;
+            }
+            set
+            {
+                if (value == null)
+                    return;
+
+                var id = AccentPalette.NormalizeId(value.Id);
+                if (string.Equals(_selectedAccentId, id, StringComparison.OrdinalIgnoreCase))
+                    return;
+
+                _selectedAccentId = id;
+                ApplyAppearance();
+                OnPropertyChanged(nameof(SelectedAccentId));
+                OnPropertyChanged(nameof(SelectedAccent));
+                PersistSettings();
+            }
+        }
+
+        public string SelectedAccentId
+        {
+            get => _selectedAccentId;
+            set
+            {
+                var id = AccentPalette.NormalizeId(value);
+                if (string.Equals(_selectedAccentId, id, StringComparison.OrdinalIgnoreCase))
+                    return;
+
+                _selectedAccentId = id;
+                ApplyAppearance();
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(SelectedAccent));
+                PersistSettings();
+            }
+        }
+
+        public BackgroundColorOption SelectedBackground
+        {
+            get
+            {
+                foreach (var bg in BackgroundColors)
+                {
+                    if (string.Equals(bg.Id, _selectedBackgroundId, StringComparison.OrdinalIgnoreCase))
+                        return bg;
+                }
+
+                return BackgroundColors.Count > 0 ? BackgroundColors[0] : null;
+            }
+            set
+            {
+                if (value == null)
+                    return;
+
+                var id = BackgroundPalette.NormalizeId(value.Id);
+                if (string.Equals(_selectedBackgroundId, id, StringComparison.OrdinalIgnoreCase))
+                    return;
+
+                _selectedBackgroundId = id;
+                ApplyAppearance();
+                OnPropertyChanged(nameof(SelectedBackgroundId));
+                OnPropertyChanged(nameof(SelectedBackground));
+                PersistSettings();
+            }
+        }
+
+        public string SelectedBackgroundId
+        {
+            get => _selectedBackgroundId;
+            set
+            {
+                var id = BackgroundPalette.NormalizeId(value);
+                if (string.Equals(_selectedBackgroundId, id, StringComparison.OrdinalIgnoreCase))
+                    return;
+
+                _selectedBackgroundId = id;
+                ApplyAppearance();
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(SelectedBackground));
                 PersistSettings();
             }
         }
@@ -455,6 +557,8 @@ namespace WpfAutoGitHelper.ViewModels
         private void OnLanguageChanged()
         {
             RefreshThemeOptions();
+            RefreshAccentOptions();
+            RefreshBackgroundOptions();
             Ui.NotifyAllProperties();
             OnPropertyChanged(nameof(BusyText));
             OnPropertyChanged(nameof(SelectedLanguage));
@@ -478,6 +582,55 @@ namespace WpfAutoGitHelper.ViewModels
             OnPropertyChanged(nameof(SelectedTheme));
         }
 
+        private void RefreshAccentOptions()
+        {
+            var selected = SelectedAccentId;
+            AccentColors.Clear();
+            foreach (var id in AccentPalette.AllIds)
+                AccentColors.Add(new AccentColorOption(id, Loc.Get(GetAccentLocKey(id))));
+
+            if (AccentColors.All(a => a.Id != selected))
+                selected = AccentPalette.DefaultId;
+            _selectedAccentId = selected;
+            OnPropertyChanged(nameof(SelectedAccentId));
+            OnPropertyChanged(nameof(SelectedAccent));
+        }
+
+        private static string GetAccentLocKey(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+                return "Accent_Blue";
+
+            return "Accent_" + char.ToUpperInvariant(id[0]) + id.Substring(1);
+        }
+
+        private void RefreshBackgroundOptions()
+        {
+            var selected = SelectedBackgroundId;
+            BackgroundColors.Clear();
+            foreach (var id in BackgroundPalette.AllIds)
+                BackgroundColors.Add(new BackgroundColorOption(id, Loc.Get(GetBackgroundLocKey(id))));
+
+            if (BackgroundColors.All(b => b.Id != selected))
+                selected = BackgroundPalette.DefaultId;
+            _selectedBackgroundId = selected;
+            OnPropertyChanged(nameof(SelectedBackgroundId));
+            OnPropertyChanged(nameof(SelectedBackground));
+        }
+
+        private static string GetBackgroundLocKey(string id)
+        {
+            if (string.IsNullOrEmpty(id) || id == BackgroundPalette.DefaultId)
+                return "Background_Default";
+
+            return "Background_" + char.ToUpperInvariant(id[0]) + id.Substring(1);
+        }
+
+        private void ApplyAppearance()
+        {
+            AppearanceManager.Apply(_selectedThemeId, _selectedAccentId, _selectedBackgroundId);
+        }
+
         private void PersistSettings()
         {
             if (!_persistSettingsEnabled)
@@ -485,6 +638,8 @@ namespace WpfAutoGitHelper.ViewModels
 
             _settings.Language = SelectedLanguageCode;
             _settings.Theme = SelectedThemeId;
+            _settings.AccentColor = SelectedAccentId;
+            _settings.BackgroundColor = SelectedBackgroundId;
             _settings.ConfirmCommit = ConfirmCommit;
             _settings.AutoRefreshOnSaveRepo = AutoRefreshOnSaveRepo;
             _settings.LastCommitMessage = CommitMessage;
@@ -524,7 +679,7 @@ namespace WpfAutoGitHelper.ViewModels
                     : RepoPath)
                 : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
-            var dialog = new NewRepositoryDialog(parentHint, SelectedThemeId)
+            var dialog = new NewRepositoryDialog(parentHint, SelectedThemeId, SelectedAccentId, SelectedBackgroundId)
             {
                 Owner = Application.Current?.MainWindow,
             };

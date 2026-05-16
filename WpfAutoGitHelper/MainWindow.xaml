@@ -3,26 +3,41 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Style="{StaticResource AppWindowStyle}"
         Title="{Binding Ui.AppTitle}"
-        Height="720" Width="960" MinHeight="480" MinWidth="640">
-    <Grid Margin="12">
+        Height="740" Width="980" MinHeight="500" MinWidth="680">
+    <Grid Margin="14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Margin="0,0,0,8">
-            <TextBlock Style="{StaticResource HeaderTitleStyle}" Text="{Binding Ui.AppTitle}"/>
-            <TextBlock Style="{StaticResource HeaderSubtitleStyle}" Text="{Binding Ui.AppSubtitle}"/>
-        </StackPanel>
+        <Border Grid.Row="0" Style="{StaticResource AppHeaderPanelStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Width="4" Background="{DynamicResource BrushAccent}"
+                        CornerRadius="2" Margin="0,4,14,4"/>
+                <StackPanel Grid.Column="1">
+                    <TextBlock Style="{StaticResource HeaderTitleStyle}" Text="{Binding Ui.AppTitle}"/>
+                    <TextBlock Style="{StaticResource HeaderSubtitleStyle}" Text="{Binding Ui.AppSubtitle}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
 
-        <Border Grid.Row="1" Style="{StaticResource SettingsPanelStyle}" Padding="10,8" Margin="0,0,0,8">
+        <Border Grid.Row="1" Style="{StaticResource StatusBarPanelStyle}">
             <WrapPanel VerticalAlignment="Center">
+                <Border Style="{StaticResource BranchBadgeStyle}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Foreground="{DynamicResource BrushMuted}" FontSize="12"
+                                   Text="{Binding Ui.RepoCurrentBranch}" VerticalAlignment="Center"/>
+                        <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource BrushAccent}"
+                                   Text="{Binding CurrentBranch}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
                 <TextBlock Foreground="{DynamicResource BrushMuted}" FontSize="12"
-                           Text="{Binding Ui.RepoCurrentBranch}" VerticalAlignment="Center"/>
-                <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource BrushText}"
-                           Text="{Binding CurrentBranch}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-                <TextBlock Foreground="{DynamicResource BrushMuted}" Text="{Binding BusyText}" VerticalAlignment="Center"/>
+                           Text="{Binding BusyText}" VerticalAlignment="Center"/>
             </WrapPanel>
         </Border>
 
@@ -36,8 +51,9 @@
                         <!-- Step 1: project folder -->
                         <GroupBox Style="{StaticResource CardGroupStyle}" Header="{Binding Ui.Step1Repo}">
                             <StackPanel>
-                                <TextBlock Foreground="{DynamicResource BrushMuted}" FontSize="11"
-                                           Text="{Binding Ui.RepoHint}" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                                <TextBlock Style="{StaticResource FieldLabelStyle}"
+                                           Text="{Binding Ui.RepoHint}" Margin="0,0,0,8" TextWrapping="Wrap"
+                                           FontWeight="Normal"/>
                                 <ComboBox Style="{StaticResource InputComboBoxStyle}" Margin="0,0,0,8"
                                           IsEditable="True"
                                           Text="{Binding RepoPath, UpdateSourceTrigger=PropertyChanged}"
@@ -132,9 +148,8 @@
                         <GroupBox Style="{StaticResource CardGroupStyle}" Header="{Binding Ui.Step4Publish}">
                             <StackPanel>
                                 <TextBlock Text="{Binding Ui.PublishHint}" TextWrapping="Wrap"
-                                           Foreground="{DynamicResource BrushMuted}" FontSize="11" Margin="0,0,0,10"/>
-                                <TextBlock Text="{Binding Ui.CommitHeader}" Margin="0,0,0,6"
-                                           Foreground="{DynamicResource BrushMuted}" FontSize="11"/>
+                                           Foreground="{DynamicResource BrushMuted}" FontSize="11.5" Margin="0,0,0,12" LineHeight="18"/>
+                                <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.CommitHeader}"/>
                                 <TextBox Style="{StaticResource InputTextBoxStyle}"
                                          Text="{Binding CommitMessage, UpdateSourceTrigger=PropertyChanged}"
                                          AcceptsReturn="True" MinHeight="72" MaxHeight="140"
@@ -164,69 +179,32 @@
                 </ScrollViewer>
             </TabItem>
 
-            <!-- 2. Git identity (global only) -->
-            <TabItem x:Name="IdentityTab" Header="{Binding Ui.TabIdentity}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <GroupBox Style="{StaticResource CardGroupStyle}" Header="{Binding Ui.IdentityHeader}" Margin="4">
-                        <StackPanel>
-                            <TextBlock Text="{Binding Ui.IdentityGlobalHint}" TextWrapping="Wrap"
-                                       Foreground="{DynamicResource BrushMuted}" FontSize="11" Margin="0,0,0,12"/>
-                            <TextBlock Text="{Binding Ui.IdentityUserName}" Margin="0,0,0,4"
-                                       Foreground="{DynamicResource BrushMuted}"/>
-                            <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,10"
-                                     Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBlock Text="{Binding Ui.IdentityUserEmail}" Margin="0,0,0,4"
-                                       Foreground="{DynamicResource BrushMuted}"/>
-                            <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,12"
-                                     Text="{Binding UserEmail, UpdateSourceTrigger=PropertyChanged}"/>
-                            <WrapPanel Margin="0,0,0,8">
-                                <Button Style="{StaticResource SecondaryButtonStyle}"
-                                        Content="{Binding Ui.BtnLoadConfig}" Command="{Binding LoadGitConfigCommand}"
-                                        ToolTip="{Binding Ui.TipLoadConfig}" MinWidth="110"/>
-                                <Button Style="{StaticResource PrimaryButtonStyle}"
-                                        Content="{Binding Ui.BtnApplyConfig}" Command="{Binding ApplyGitConfigCommand}"
-                                        ToolTip="{Binding Ui.TipApplyConfig}" MinWidth="110"/>
-                            </WrapPanel>
-                            <Button Style="{StaticResource SecondaryButtonStyle}"
-                                    Content="{Binding Ui.BtnClearIdentity}" Command="{Binding ClearIdentityCommand}"
-                                    ToolTip="{Binding Ui.TipClearIdentity}" MinWidth="200"
-                                    HorizontalAlignment="Left"/>
-                        </StackPanel>
-                    </GroupBox>
-                </ScrollViewer>
-            </TabItem>
-
-            <!-- 3. Releases -->
+            <!-- 2. Releases -->
             <TabItem x:Name="ReleasesTab" Header="{Binding Ui.TabReleases}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <GroupBox Style="{StaticResource CardGroupStyle}" Header="{Binding Ui.ReleasesHeader}" Margin="4">
                         <StackPanel>
                             <TextBlock Text="{Binding Ui.ReleasesHint}" TextWrapping="Wrap"
-                                       Foreground="{DynamicResource BrushMuted}" FontSize="11" Margin="0,0,0,12"/>
-                            <TextBlock Text="{Binding Ui.ReleaseTag}" Margin="0,0,0,4"
-                                       Foreground="{DynamicResource BrushMuted}"/>
+                                       Foreground="{DynamicResource BrushMuted}" FontSize="11.5" Margin="0,0,0,14" LineHeight="18"/>
+                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.ReleaseTag}"/>
                             <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,10"
                                      Text="{Binding ReleaseTag, UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBlock Text="{Binding Ui.ReleaseTitle}" Margin="0,0,0,4"
-                                       Foreground="{DynamicResource BrushMuted}"/>
+                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.ReleaseTitle}"/>
                             <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,10"
                                      Text="{Binding ReleaseTitle, UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBlock Text="{Binding Ui.ReleaseNotes}" Margin="0,0,0,4"
-                                       Foreground="{DynamicResource BrushMuted}"/>
+                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.ReleaseNotes}"/>
                             <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,10"
                                      Text="{Binding ReleaseNotes, UpdateSourceTrigger=PropertyChanged}"
                                      AcceptsReturn="True" MinHeight="96" MaxHeight="180"
                                      TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
-                            <TextBlock Text="{Binding Ui.ReleaseTarget}" Margin="0,0,0,4"
-                                       Foreground="{DynamicResource BrushMuted}"/>
+                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.ReleaseTarget}"/>
                             <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,10"
                                      Text="{Binding ReleaseTargetBranch, UpdateSourceTrigger=PropertyChanged}"/>
                             <CheckBox Content="{Binding Ui.ReleaseLatest}" Margin="0,0,0,6"
                                       IsChecked="{Binding ReleaseLatest}"/>
                             <CheckBox Content="{Binding Ui.ReleasePrerelease}" Margin="0,0,0,12"
                                       IsChecked="{Binding ReleasePrerelease}"/>
-                            <TextBlock Text="{Binding Ui.ReleaseAssets}" Margin="0,4,0,4"
-                                       Foreground="{DynamicResource BrushMuted}"/>
+                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.ReleaseAssets}" Margin="0,8,0,4"/>
                             <TextBlock Text="{Binding Ui.ReleaseAssetsHint}" TextWrapping="Wrap"
                                        Foreground="{DynamicResource BrushMuted}" FontSize="11" Margin="0,0,0,6"/>
                             <ListBox Style="{StaticResource AppListBoxStyle}"
@@ -258,6 +236,36 @@
                 </ScrollViewer>
             </TabItem>
 
+            <!-- 3. Git identity (global only) -->
+            <TabItem x:Name="IdentityTab" Header="{Binding Ui.TabIdentity}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <GroupBox Style="{StaticResource CardGroupStyle}" Header="{Binding Ui.IdentityHeader}" Margin="4">
+                        <StackPanel>
+                            <TextBlock Text="{Binding Ui.IdentityGlobalHint}" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource BrushMuted}" FontSize="11.5" Margin="0,0,0,14" LineHeight="18"/>
+                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.IdentityUserName}"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,12"
+                                     Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.IdentityUserEmail}"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,14"
+                                     Text="{Binding UserEmail, UpdateSourceTrigger=PropertyChanged}"/>
+                            <WrapPanel Margin="0,0,0,8">
+                                <Button Style="{StaticResource SecondaryButtonStyle}"
+                                        Content="{Binding Ui.BtnLoadConfig}" Command="{Binding LoadGitConfigCommand}"
+                                        ToolTip="{Binding Ui.TipLoadConfig}" MinWidth="110"/>
+                                <Button Style="{StaticResource PrimaryButtonStyle}"
+                                        Content="{Binding Ui.BtnApplyConfig}" Command="{Binding ApplyGitConfigCommand}"
+                                        ToolTip="{Binding Ui.TipApplyConfig}" MinWidth="110"/>
+                            </WrapPanel>
+                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                    Content="{Binding Ui.BtnClearIdentity}" Command="{Binding ClearIdentityCommand}"
+                                    ToolTip="{Binding Ui.TipClearIdentity}" MinWidth="200"
+                                    HorizontalAlignment="Left"/>
+                        </StackPanel>
+                    </GroupBox>
+                </ScrollViewer>
+            </TabItem>
+
             <!-- 4. Log -->
             <TabItem x:Name="LogTab" Header="{Binding Ui.TabLog}">
                 <Grid Margin="4">
@@ -284,6 +292,8 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,10"
                                            Foreground="{DynamicResource BrushMuted}" Text="{Binding Ui.SettingsLanguage}"/>
@@ -297,12 +307,36 @@
                                         </DataTemplate>
                                     </ComboBox.ItemTemplate>
                                 </ComboBox>
-                                <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0"
+                                <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,10"
                                            Foreground="{DynamicResource BrushMuted}" Text="{Binding Ui.SettingsTheme}"/>
                                 <ComboBox Grid.Row="1" Grid.Column="1" Style="{StaticResource InputComboBoxStyle}"
-                                          IsEditable="False"
+                                          IsEditable="False" Margin="0,0,0,10"
                                           ItemsSource="{Binding Themes}"
                                           SelectedItem="{Binding SelectedTheme, Mode=TwoWay}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource BrushText}"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,10"
+                                           Foreground="{DynamicResource BrushMuted}" Text="{Binding Ui.SettingsBackgroundColor}"/>
+                                <ComboBox Grid.Row="2" Grid.Column="1" Style="{StaticResource InputComboBoxStyle}"
+                                          IsEditable="False" Margin="0,0,0,10"
+                                          ItemsSource="{Binding BackgroundColors}"
+                                          SelectedItem="{Binding SelectedBackground, Mode=TwoWay}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource BrushText}"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0"
+                                           Foreground="{DynamicResource BrushMuted}" Text="{Binding Ui.SettingsAccentColor}"/>
+                                <ComboBox Grid.Row="3" Grid.Column="1" Style="{StaticResource InputComboBoxStyle}"
+                                          IsEditable="False"
+                                          ItemsSource="{Binding AccentColors}"
+                                          SelectedItem="{Binding SelectedAccent, Mode=TwoWay}">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource BrushText}"/>

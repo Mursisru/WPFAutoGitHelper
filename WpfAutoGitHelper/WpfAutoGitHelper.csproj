@@ -72,6 +72,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Themes\ThemeChrome.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>
@@ -88,6 +92,11 @@
     <Compile Include="Models\ReleaseRequest.cs" />
     <Compile Include="Models\TemplateOption.cs" />
     <Compile Include="Models\ThemeOption.cs" />
+    <Compile Include="Models\AccentColorOption.cs" />
+    <Compile Include="Services\AccentPalette.cs" />
+    <Compile Include="Services\AppearanceManager.cs" />
+    <Compile Include="Services\BackgroundPalette.cs" />
+    <Compile Include="Models\BackgroundColorOption.cs" />
     <Compile Include="Services\GitHubCliRunner.cs" />
     <Compile Include="Services\GitignoreTemplates.cs" />
     <Compile Include="Services\LicenseTexts.cs" />

@@ -8,11 +8,11 @@ namespace WpfAutoGitHelper
 {
     public partial class NewRepositoryDialog : Window
     {
-        public NewRepositoryDialog(string initialParentDirectory, string themeId)
+        public NewRepositoryDialog(string initialParentDirectory, string themeId, string accentId, string backgroundId)
         {
             InitializeComponent();
             DataContext = new NewRepositoryDialogViewModel(initialParentDirectory);
-            ThemeManager.ApplyTo(this, themeId);
+            AppearanceManager.ApplyTo(this, themeId, accentId, backgroundId);
         }
 
         public NewRepositoryRequest Result { get; private set; }

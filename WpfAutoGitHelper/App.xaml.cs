@@ -16,7 +16,10 @@ namespace WpfAutoGitHelper
             try
             {
                 var settings = SettingsStore.Load();
-                ThemeManager.Apply(settings.Theme);
+                AppearanceManager.Apply(
+                    settings.Theme,
+                    settings.AccentColor,
+                    settings.BackgroundColor);
 
                 var window = new MainWindow();
                 window.Show();

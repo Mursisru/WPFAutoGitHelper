@@ -1,7 +1,6 @@
 using System;
 using System.Windows;
 using System.Windows.Threading;
-using WpfAutoGitHelper.Services;
 using WpfAutoGitHelper.ViewModels;
 
 namespace WpfAutoGitHelper
@@ -17,8 +16,6 @@ namespace WpfAutoGitHelper
             {
                 _viewModel = new MainViewModel();
                 DataContext = _viewModel;
-                ThemeManager.ApplyTo(this, _viewModel.SelectedThemeId);
-                ThemeManager.ThemeChanged += OnThemeChanged;
                 _viewModel.LanguageChanged += OnViewModelLanguageChanged;
 
                 RefreshTabHeaders();
@@ -28,12 +25,6 @@ namespace WpfAutoGitHelper
                 MessageBox.Show(ex.ToString(), "WPF Auto Git Helper", MessageBoxButton.OK, MessageBoxImage.Error);
                 throw;
             }
-        }
-
-        private void OnThemeChanged()
-        {
-            if (_viewModel != null)
-                ThemeManager.ApplyTo(this, _viewModel.SelectedThemeId);
         }
 
         private void OnViewModelLanguageChanged()
@@ -48,15 +39,14 @@ namespace WpfAutoGitHelper
 
             Title = _viewModel.Ui.AppTitle;
             ActionsTab.Header = _viewModel.Ui.TabActions;
-            IdentityTab.Header = _viewModel.Ui.TabIdentity;
             ReleasesTab.Header = _viewModel.Ui.TabReleases;
+            IdentityTab.Header = _viewModel.Ui.TabIdentity;
             LogTab.Header = _viewModel.Ui.TabLog;
             SettingsTab.Header = _viewModel.Ui.TabSettings;
         }
 
-        protected override void OnClosed(System.EventArgs e)
+        protected override void OnClosed(EventArgs e)
         {
-            ThemeManager.ThemeChanged -= OnThemeChanged;
             if (_viewModel != null)
                 _viewModel.LanguageChanged -= OnViewModelLanguageChanged;
             base.OnClosed(e);

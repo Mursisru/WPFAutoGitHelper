@@ -14,6 +14,8 @@ namespace WpfAutoGitHelper.Services
         public List<string> RecentRepoPaths { get; set; } = new List<string>();
         public string Language { get; set; } = "en";
         public string Theme { get; set; } = "light";
+        public string AccentColor { get; set; } = "blue";
+        public string BackgroundColor { get; set; } = "default";
         public bool ConfirmCommit { get; set; } = true;
         public bool ConfirmRestore { get; set; } = true;
         public bool AutoRefreshOnSaveRepo { get; set; } = true;

@@ -10,22 +10,13 @@ namespace WpfAutoGitHelper.Services
         public const string Dark = "dark";
         public const string Black = "black";
 
-        public static event Action ThemeChanged;
-
         public static void Apply(string theme)
         {
-            theme = Normalize(theme);
-
             var app = Application.Current;
             if (app == null)
                 return;
 
-            ApplyToResources(app.Resources, theme);
-
-            foreach (Window window in app.Windows)
-                ApplyToResources(window.Resources, theme);
-
-            ThemeChanged?.Invoke();
+            ApplyToResources(app.Resources, Normalize(theme));
         }
 
         public static void ApplyTo(Window window, string theme)
@@ -46,7 +37,7 @@ namespace WpfAutoGitHelper.Services
             return Light;
         }
 
-        private static void ApplyToResources(ResourceDictionary resources, string theme)
+        internal static void ApplyToResources(ResourceDictionary resources, string theme)
         {
             var themeUri = GetThemeUri(theme);
 
