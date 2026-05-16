@@ -1,5 +1,7 @@
 bin/
 obj/
+# Release binaries belong on GitHub Releases, not in the source tree
+/WPFAutoGitHelper_v*.zip
 **/Data/
 Data/
 *.user

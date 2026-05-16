@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.1 — 2026-05-16
+
+### Fixed
+- **Sync to GitHub** pulls remote changes **before** committing, avoiding modify/delete conflicts when GitHub removed a file (e.g. `WPFAutoGitHelper_v1.2.1.zip`) but the local tree still had it.
+- Pull uses **`--autostash`**; on rebase conflicts with obsolete root release `.zip` files, the app can remove them and continue (or abort rebase and fall back to merge pull).
+- Recovers from an **interrupted rebase** left by a failed previous sync.
+
+### Changed
+- Root release zips (`WPFAutoGitHelper_v*.zip`) are listed in **`.gitignore`** (use GitHub Releases for binaries).
+
 ## 1.3.0 — 2026-05-16
 
 ### Added

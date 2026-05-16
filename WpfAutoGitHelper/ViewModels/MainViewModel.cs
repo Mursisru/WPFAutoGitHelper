@@ -988,6 +988,21 @@ namespace WpfAutoGitHelper.ViewModels
             await RunGitLoggedAsync("fetch", "origin");
             await EnsureUpstreamAsync(branch);
 
+            if (!await TryRecoverInterruptedGitOperationAsync())
+            {
+                await ShowPublishFailureAsync();
+                await RefreshStatusAsync();
+                return;
+            }
+
+            // Pull remote updates before committing so deleted-on-GitHub files (e.g. release zips) do not cause rebase conflicts.
+            if (!await TryIntegrateRemoteAsync(branch))
+            {
+                await ShowPublishFailureAsync();
+                await RefreshStatusAsync();
+                return;
+            }
+
             if (!await TryAutoCommitAllAsync())
             {
                 MessageBox.Show(
@@ -1116,14 +1131,115 @@ namespace WpfAutoGitHelper.ViewModels
                 return true;
 
             AppendLog(Loc.Get("Msg_SyncPulling"));
-            var pull = await RunGitLoggedAsync("pull", "--rebase", "origin", branch);
+            var pull = await RunGitLoggedAsync("pull", "--rebase", "--autostash", "origin", branch);
             if (!pull.Success)
-                pull = await RunGitLoggedAsync("pull", "origin", branch);
+            {
+                if (await TryAutoResolveKnownConflictsAsync() && await TryContinueRebaseAsync())
+                    return !await HasMergeConflictsInTreeAsync();
+
+                if (await IsRebaseInProgressAsync())
+                {
+                    await RunGitLoggedAsync("rebase", "--abort");
+                    pull = await RunGitLoggedAsync("pull", "--autostash", "origin", branch);
+                }
+
+                if (!pull.Success)
+                    pull = await RunGitLoggedAsync("pull", "origin", branch);
+            }
+
+            if (!pull.Success && await IsRebaseInProgressAsync())
+                await RunGitLoggedAsync("rebase", "--abort");
 
             if (!pull.Success)
                 return false;
 
             return !await HasMergeConflictsInTreeAsync();
+        }
+
+        private async Task<bool> TryRecoverInterruptedGitOperationAsync()
+        {
+            if (!await IsRebaseInProgressAsync())
+                return true;
+
+            AppendLog(Loc.Get("Msg_SyncRecoverRebase"));
+            if (await TryAutoResolveKnownConflictsAsync())
+                return await TryContinueRebaseAsync();
+
+            await RunGitLoggedAsync("rebase", "--abort");
+            return !await IsRebaseInProgressAsync();
+        }
+
+        private async Task<bool> IsRebaseInProgressAsync()
+        {
+            var gitDir = Path.Combine(RepoPath, ".git");
+            if (Directory.Exists(Path.Combine(gitDir, "rebase-merge")) ||
+                Directory.Exists(Path.Combine(gitDir, "rebase-apply")))
+                return true;
+
+            var status = await RunGitQuietAsync("status");
+            if (!status.Success)
+                return false;
+
+            return status.StandardOutput.IndexOf("rebase in progress", StringComparison.OrdinalIgnoreCase) >= 0
+                || status.StandardOutput.IndexOf("currently rebasing", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private async Task<bool> TryAutoResolveKnownConflictsAsync()
+        {
+            var resolved = false;
+            var status = await RunGitQuietAsync("status", "--porcelain");
+            if (!status.Success || string.IsNullOrWhiteSpace(status.StandardOutput))
+                return false;
+
+            foreach (var line in status.StandardOutput.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (line.Length < 4)
+                    continue;
+
+                var path = line.Substring(3).Trim();
+                if (string.IsNullOrEmpty(path) || !IsAutoResolvableReleaseArtifact(path))
+                    continue;
+
+                var code = line.Substring(0, 2);
+                if (code[0] != 'U' && code[1] != 'U' && code.IndexOf('D') < 0)
+                    continue;
+
+                var rm = await RunGitLoggedAsync("rm", "-f", "--", path);
+                if (rm.Success)
+                {
+                    resolved = true;
+                    AppendLog(string.Format(Loc.Get("Msg_SyncResolvedConflict"), path));
+                }
+            }
+
+            return resolved;
+        }
+
+        private static bool IsAutoResolvableReleaseArtifact(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return false;
+
+            var name = Path.GetFileName(path);
+            if (name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
+                name.StartsWith("WPFAutoGitHelper_v", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            return name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)
+                && path.IndexOf(Path.DirectorySeparatorChar) < 0
+                && path.IndexOf('/') < 0;
+        }
+
+        private async Task<bool> TryContinueRebaseAsync()
+        {
+            var result = await RunGitLoggedAsync("-c", "core.editor=true", "rebase", "--continue");
+            if (result.Success)
+                return true;
+
+            if (await TryAutoResolveKnownConflictsAsync())
+                result = await RunGitLoggedAsync("-c", "core.editor=true", "rebase", "--continue");
+
+            return result.Success && !await HasMergeConflictsInTreeAsync();
         }
 
         private async Task<GitRunResult> TryPushWithRetryAsync(string branch)
