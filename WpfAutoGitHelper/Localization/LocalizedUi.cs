@@ -42,12 +42,16 @@ namespace WpfAutoGitHelper.Localization
         public string BtnAddAll => Loc.Get("Btn_AddAll");
         public string BtnCommit => Loc.Get("Btn_Commit");
         public string BtnPush => Loc.Get("Btn_Push");
+        public string BtnSyncGitHub => Loc.Get("Btn_SyncGitHub");
+        public string BtnConfigureOrigin => Loc.Get("Btn_ConfigureOrigin");
         public string TipPull => Loc.Get("Tip_Pull");
         public string TipStatus => Loc.Get("Tip_Status");
         public string TipDiff => Loc.Get("Tip_Diff");
         public string TipAddAll => Loc.Get("Tip_AddAll");
         public string TipCommit => Loc.Get("Tip_Commit");
         public string TipPush => Loc.Get("Tip_Push");
+        public string TipSyncGitHub => Loc.Get("Tip_SyncGitHub");
+        public string TipConfigureOrigin => Loc.Get("Tip_ConfigureOrigin");
         public string ActionsHelpText => string.Join(
             System.Environment.NewLine,
             Loc.Get("Help_Pull"),

@@ -90,6 +90,8 @@ namespace WpfAutoGitHelper.ViewModels
             AddAllCommand = new RelayCommand(async () => await AddAllAsync(), () => HasValidRepo && !IsBusy);
             CommitCommand = new RelayCommand(async () => await CommitAsync(), () => HasValidRepo && !IsBusy);
             PushCommand = new RelayCommand(async () => await PushAsync(), () => HasValidRepo && !IsBusy);
+            SyncToGitHubCommand = new RelayCommand(async () => await SyncToGitHubAsync(), () => HasValidRepo && !IsBusy);
+            ConfigureOriginCommand = new RelayCommand(async () => await ConfigureOriginAsync(), () => HasValidRepo && !IsBusy);
             ClearWorkflowCommand = new RelayCommand(ClearWorkflow, () => !IsBusy);
             CreateReleaseCommand = new RelayCommand(async () => await CreateReleaseAsync(), () => HasValidRepo && !IsBusy);
             OpenReleasesCommand = new RelayCommand(async () => await OpenReleasesPageAsync(), () => HasValidRepo && !IsBusy);
@@ -432,6 +434,8 @@ namespace WpfAutoGitHelper.ViewModels
         public ICommand AddAllCommand { get; }
         public ICommand CommitCommand { get; }
         public ICommand PushCommand { get; }
+        public ICommand SyncToGitHubCommand { get; }
+        public ICommand ConfigureOriginCommand { get; }
         public ICommand ClearWorkflowCommand { get; }
         public ICommand CreateReleaseCommand { get; }
         public ICommand OpenReleasesCommand { get; }
@@ -770,12 +774,24 @@ namespace WpfAutoGitHelper.ViewModels
             await RefreshStatusAsync();
         }
 
-        private async Task<bool> EnsureOriginRemoteAsync()
+        private async Task<bool> EnsureOriginRemoteAsync(bool forcePrompt = false)
         {
             var currentUrl = "";
             var remote = await RunGitQuietAsync("remote", "get-url", "origin");
             if (remote.Success && !string.IsNullOrWhiteSpace(remote.StandardOutput))
                 currentUrl = remote.StandardOutput.Trim();
+
+            if (!forcePrompt && !string.IsNullOrEmpty(currentUrl))
+            {
+                var web = GitRunner.ToGitHubWebUrl(currentUrl);
+                if (!string.IsNullOrWhiteSpace(web))
+                {
+                    _settings.CachedGitHubUrl = web;
+                    SettingsStore.Save(_settings);
+                }
+
+                return true;
+            }
 
             var defaultUrl = string.IsNullOrWhiteSpace(currentUrl)
                 ? "https://github.com/user/repo.git"
@@ -783,7 +799,7 @@ namespace WpfAutoGitHelper.ViewModels
 
             var url = Microsoft.VisualBasic.Interaction.InputBox(
                 Loc.Get("Dlg_RemoteUrlPrompt"),
-                Loc.Get("Dlg_ConfirmRemoteTitle"),
+                forcePrompt ? Loc.Get("Dlg_ConfirmRemoteTitle") : Loc.Get("Dlg_AddRemoteTitle"),
                 defaultUrl);
 
             if (string.IsNullOrWhiteSpace(url))
@@ -809,7 +825,26 @@ namespace WpfAutoGitHelper.ViewModels
                     AppendLog(string.Format(Loc.Get("Msg_RemoteUpdated"), url));
             }
 
+            if (result.Success)
+            {
+                var web = GitRunner.ToGitHubWebUrl(url);
+                if (!string.IsNullOrWhiteSpace(web))
+                {
+                    _settings.CachedGitHubUrl = web;
+                    SettingsStore.Save(_settings);
+                }
+            }
+
             return result.Success;
+        }
+
+        private async Task ConfigureOriginAsync()
+        {
+            if (!HasValidRepo)
+                return;
+
+            await EnsureOriginRemoteAsync(forcePrompt: true);
+            await RefreshStatusAsync();
         }
 
         private void SaveRepo()
@@ -895,9 +930,12 @@ namespace WpfAutoGitHelper.ViewModels
 
         private async Task PullAsync()
         {
-            var branch = CurrentBranch;
-            if (branch == UnknownBranch || string.IsNullOrWhiteSpace(branch))
-                branch = "main";
+            var branch = await ResolveWorkingBranchAsync();
+            if (branch == null)
+                return;
+
+            await RunGitLoggedAsync("fetch", "origin");
+            await EnsureUpstreamAsync(branch);
 
             var result = await RunGitLoggedAsync("pull", "--rebase", "origin", branch);
             if (!result.Success)
@@ -933,57 +971,224 @@ namespace WpfAutoGitHelper.ViewModels
             await RefreshStatusAsync();
         }
 
-        private async Task PushAsync()
+        private Task PushAsync() => PublishToGitHubAsync(showSuccessDialog: false);
+
+        private Task SyncToGitHubAsync() => PublishToGitHubAsync(showSuccessDialog: true);
+
+        private async Task PublishToGitHubAsync(bool showSuccessDialog)
         {
-            var branch = CurrentBranch;
-            if (branch == UnknownBranch || string.IsNullOrWhiteSpace(branch))
-            {
-                MessageBox.Show(Loc.Get("Msg_NoBranch"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+            var branch = await ResolveWorkingBranchAsync();
+            if (branch == null)
                 return;
-            }
 
             if (!await EnsureOriginRemoteAsync())
                 return;
 
-            if (await HasUncommittedChangesAsync())
+            AppendLog(Loc.Get("Msg_SyncStarting"));
+            await RunGitLoggedAsync("fetch", "origin");
+            await EnsureUpstreamAsync(branch);
+
+            if (!await TryAutoCommitAllAsync())
             {
                 MessageBox.Show(
-                    Loc.Get("Msg_PushNeedCommit"),
+                    Loc.Get("Msg_SyncFailed"),
+                    Caption,
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                await RefreshStatusAsync();
+                return;
+            }
+
+            await RunGitLoggedAsync("fetch", "origin");
+
+            if (!await TryIntegrateRemoteAsync(branch))
+            {
+                await ShowPublishFailureAsync();
+                await RefreshStatusAsync();
+                return;
+            }
+
+            var push = await TryPushWithRetryAsync(branch);
+            if (!push.Success)
+            {
+                await ShowPublishFailureAsync();
+                await RefreshStatusAsync();
+                return;
+            }
+
+            AppendLog(Loc.Get("Msg_SyncSuccess"));
+            if (showSuccessDialog)
+            {
+                MessageBox.Show(
+                    Loc.Get("Msg_SyncSuccess"),
+                    Caption,
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+
+            await RefreshStatusAsync();
+        }
+
+        private async Task ShowPublishFailureAsync()
+        {
+            if (await HasMergeConflictsInTreeAsync())
+            {
+                MessageBox.Show(
+                    Loc.Get("Msg_SyncConflict"),
                     Caption,
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
                 return;
             }
 
-            var push = await RunGitLoggedAsync("push", "-u", "origin", branch);
-            if (!push.Success)
+            MessageBox.Show(
+                Loc.Get("Msg_SyncFailed"),
+                Caption,
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
+
+        private async Task<string> ResolveWorkingBranchAsync()
+        {
+            if (CurrentBranch != UnknownBranch && !string.IsNullOrWhiteSpace(CurrentBranch))
+                return CurrentBranch.Trim();
+
+            var branch = await RunGitQuietAsync("branch", "--show-current");
+            if (branch.Success && !string.IsNullOrWhiteSpace(branch.StandardOutput))
             {
-                var err = push.StandardOutput + push.StandardError;
-                if (IsNonFastForwardPushError(err))
-                {
-                    MessageBox.Show(
-                        Loc.Get("Msg_PushNeedPull"),
-                        Caption,
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
-                }
-                else
-                {
-                    MessageBox.Show(
-                        Loc.Get("Msg_PushFailedHint"),
-                        Caption,
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
-                }
+                CurrentBranch = branch.StandardOutput.Trim();
+                return CurrentBranch;
             }
 
-            await RefreshStatusAsync();
+            MessageBox.Show(Loc.Get("Msg_NoBranch"), Caption, MessageBoxButton.OK, MessageBoxImage.Warning);
+            return null;
+        }
+
+        private async Task EnsureUpstreamAsync(string branch)
+        {
+            var upstream = await RunGitQuietAsync("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}");
+            if (upstream.Success && !string.IsNullOrWhiteSpace(upstream.StandardOutput))
+                return;
+
+            await RunGitLoggedAsync("branch", "--set-upstream-to=origin/" + branch, branch);
+        }
+
+        private async Task<bool> TryAutoCommitAllAsync()
+        {
+            if (!await HasUncommittedChangesAsync())
+                return true;
+
+            AppendLog(Loc.Get("Msg_SyncAutoCommit"));
+            await RunGitLoggedAsync("add", "-A");
+            var message = ResolveAutoCommitMessage();
+            var commit = await RunGitLoggedAsync("commit", "-m", message);
+            if (!commit.Success)
+            {
+                var combined = commit.StandardOutput + commit.StandardError;
+                if (combined.IndexOf("nothing to commit", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+
+                return false;
+            }
+
+            CommitMessage = message;
+            _settings.LastCommitMessage = message;
+            PersistSettings();
+            return true;
+        }
+
+        private string ResolveAutoCommitMessage()
+        {
+            if (!string.IsNullOrWhiteSpace(CommitMessage))
+                return CommitMessage.Trim();
+
+            if (!string.IsNullOrWhiteSpace(_settings.LastCommitMessage))
+                return _settings.LastCommitMessage.Trim();
+
+            return Loc.GetEnglish("Msg_AutoSyncCommit");
+        }
+
+        private async Task<bool> TryIntegrateRemoteAsync(string branch)
+        {
+            await RunGitQuietAsync("fetch", "origin");
+            var counts = await GetAheadBehindAsync(branch);
+            if (!counts.RemoteBranchExists || counts.Behind <= 0)
+                return true;
+
+            AppendLog(Loc.Get("Msg_SyncPulling"));
+            var pull = await RunGitLoggedAsync("pull", "--rebase", "origin", branch);
+            if (!pull.Success)
+                pull = await RunGitLoggedAsync("pull", "origin", branch);
+
+            if (!pull.Success)
+                return false;
+
+            return !await HasMergeConflictsInTreeAsync();
+        }
+
+        private async Task<GitRunResult> TryPushWithRetryAsync(string branch)
+        {
+            var push = await RunGitLoggedAsync("push", "-u", "origin", branch);
+            if (push.Success)
+                return push;
+
+            var err = push.StandardOutput + push.StandardError;
+            if (!IsNonFastForwardPushError(err))
+                return push;
+
+            if (!await TryIntegrateRemoteAsync(branch))
+                return push;
+
+            if (await HasMergeConflictsInTreeAsync())
+                return push;
+
+            return await RunGitLoggedAsync("push", "-u", "origin", branch);
+        }
+
+        private async Task<AheadBehindCounts> GetAheadBehindAsync(string branch)
+        {
+            var counts = new AheadBehindCounts();
+            var count = await RunGitQuietAsync("rev-list", "--left-right", "--count", "origin/" + branch + "...HEAD");
+            if (!count.Success || string.IsNullOrWhiteSpace(count.StandardOutput))
+                return counts;
+
+            var parts = count.StandardOutput.Trim().Split(new[] { '\t', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length < 2)
+                return counts;
+
+            if (!int.TryParse(parts[0], out var behind) || !int.TryParse(parts[1], out var ahead))
+                return counts;
+
+            counts.RemoteBranchExists = true;
+            counts.Behind = behind;
+            counts.Ahead = ahead;
+            return counts;
         }
 
         private async Task<bool> HasUncommittedChangesAsync()
         {
             var status = await RunGitQuietAsync("status", "--porcelain");
             return status.Success && !string.IsNullOrWhiteSpace(status.StandardOutput);
+        }
+
+        private async Task<bool> HasMergeConflictsInTreeAsync()
+        {
+            var status = await RunGitQuietAsync("status", "--porcelain");
+            if (!status.Success || string.IsNullOrWhiteSpace(status.StandardOutput))
+                return false;
+
+            foreach (var line in status.StandardOutput.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (line.Length < 2)
+                    continue;
+
+                var x = line[0];
+                var y = line.Length > 1 ? line[1] : ' ';
+                if (x == 'U' || y == 'U' || (x == 'A' && y == 'A') || (x == 'D' && y == 'D'))
+                    return true;
+            }
+
+            return false;
         }
 
         private static bool IsNonFastForwardPushError(string text)
@@ -1289,8 +1494,19 @@ namespace WpfAutoGitHelper.ViewModels
             if (!await EnsureOriginRemoteAsync())
                 return;
 
-            await RunGitLoggedAsync("push", "-u", "origin", branch);
+            await RunGitLoggedAsync("fetch", "origin");
+            var push = await TryPushWithRetryAsync(branch);
+            if (!push.Success)
+                await ShowPublishFailureAsync();
+
             await RefreshStatusAsync();
+        }
+
+        private sealed class AheadBehindCounts
+        {
+            public bool RemoteBranchExists { get; set; }
+            public int Behind { get; set; }
+            public int Ahead { get; set; }
         }
 
         private async Task<string> ResolveCurrentBranchNameAsync(string repoPath, CancellationToken token)

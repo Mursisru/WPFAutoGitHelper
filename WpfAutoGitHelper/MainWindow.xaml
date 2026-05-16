@@ -59,6 +59,9 @@
                                     <Button Style="{StaticResource SecondaryButtonStyle}"
                                             Content="{Binding Ui.BtnOpenGitHub}" Command="{Binding OpenGitHubCommand}"
                                             ToolTip="{Binding Ui.TipOpenGitHub}" MinWidth="80"/>
+                                    <Button Style="{StaticResource SecondaryButtonStyle}"
+                                            Content="{Binding Ui.BtnConfigureOrigin}" Command="{Binding ConfigureOriginCommand}"
+                                            ToolTip="{Binding Ui.TipConfigureOrigin}" MinWidth="100"/>
                                 </WrapPanel>
                             </StackPanel>
                         </GroupBox>
@@ -139,9 +142,12 @@
                                          Margin="0,0,0,10"/>
                                 <WrapPanel>
                                     <Button Style="{StaticResource PrimaryButtonStyle}"
+                                            Content="{Binding Ui.BtnSyncGitHub}" Command="{Binding SyncToGitHubCommand}"
+                                            ToolTip="{Binding Ui.TipSyncGitHub}" MinWidth="148"/>
+                                    <Button Style="{StaticResource SecondaryButtonStyle}"
                                             Content="{Binding Ui.BtnCommit}" Command="{Binding CommitCommand}"
                                             ToolTip="{Binding Ui.TipCommit}" MinWidth="100"/>
-                                    <Button Style="{StaticResource PrimaryButtonStyle}"
+                                    <Button Style="{StaticResource SecondaryButtonStyle}"
                                             Content="{Binding Ui.BtnPush}" Command="{Binding PushCommand}"
                                             ToolTip="{Binding Ui.TipPush}" MinWidth="100"/>
                                 </WrapPanel>

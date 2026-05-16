@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.3.0 — 2026-05-16
+
+### Added
+- **Sync to GitHub** — one-click workflow: stage all changes, commit, pull remote updates (rebase with merge fallback), then push.
+- **Origin URL…** button to view or change the `origin` remote without blocking every push.
+
+### Changed
+- **Push** uses the same automated pipeline as Sync (auto-commit, auto-pull on rejection, retry push) instead of showing “do Pull / Add all” dialogs.
+- **Pull** runs `git fetch` first and sets upstream tracking when missing.
+- **origin** URL dialog appears only when `origin` is not configured (or when you click Origin URL…).
+
+### Fixed
+- Push no longer stops on uncommitted changes or non-fast-forward errors when a pull can integrate remote commits.
+
 ## 1.2.1 — 2026-05-15
 
 ### Changed
