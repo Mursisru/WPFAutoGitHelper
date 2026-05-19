@@ -1,15 +1,14 @@
 # Changelog
 
-## 1.5.0 Build PR-R1P8 — 2026-05-19 (pre-release)
-
-### Added
-- **Auto Advanced — autonomous git recovery:** interactive rebase handled automatically (stage, amend, conflict resolution, continue/skip loop).
-- **Auto conflict resolve:** keeps working-tree files; resolves markers in CHANGELOG / PRE-RELEASE / VERSION / csproj (Ours); fallback `checkout --ours`; skip duplicate rebase picks when needed.
-
-### Fixed
-- **Current branch** detectable during interactive rebase (`development-test (rebase)` in UI).
+## 1.5.0 Build PR-R1P8 — 2026-05-19 (pre-release)
+
+### Added
+- **Auto Advanced — autonomous git recovery:** interactive rebase handled automatically (stage, amend, conflict resolution, continue/skip loop).
+- **Auto conflict resolve:** keeps working-tree files; resolves markers in CHANGELOG / PRE-RELEASE / VERSION / csproj (Ours); fallback `checkout --ours`; skip duplicate rebase picks when needed.
+
+### Fixed
+- **Current branch** detectable during interactive rebase (`development-test (rebase)` in UI).
 - **Pull** not run while rebase is in progress.
-
 ## 1.5.0 Build PR-R1P7 — 2026-05-19 (pre-release)
 
 ### Changed
