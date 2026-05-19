@@ -1217,11 +1217,19 @@ namespace WpfAutoGitHelper.ViewModels
                 return true;
 
             var combined = commit.StandardOutput + commit.StandardError;
-            if (combined.IndexOf("nothing to commit", StringComparison.OrdinalIgnoreCase) >= 0)
-                await NotifyAsync(Loc.Get("Msg_NothingToCommit"), isError: true).ConfigureAwait(true);
-            else
-                await NotifyAsync(Loc.Get("Msg_CommitFailed"), isError: true).ConfigureAwait(true);
+            if (IsNothingToCommitMessage(combined))
+            {
+                if (IsAutoAdvancedMode)
+                {
+                    AppendLog(Loc.Get("Auto_SkipCommitClean"));
+                    return true;
+                }
 
+                await NotifyAsync(Loc.Get("Msg_NothingToCommit"), isError: true).ConfigureAwait(true);
+                return false;
+            }
+
+            await NotifyAsync(Loc.Get("Msg_CommitFailed"), isError: true).ConfigureAwait(true);
             return false;
         }
 

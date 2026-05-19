@@ -212,23 +212,35 @@ namespace WpfAutoGitHelper.ViewModels
                 return;
             }
 
-            if (AutoUseSelectedFiles)
+            if (await HasWorkingTreeChangesAsync().ConfigureAwait(true))
             {
-                if (!await StageSelectedFilesAsync(true).ConfigureAwait(true))
+                if (AutoUseSelectedFiles)
                 {
-                    AppendLog(Loc.Get("Auto_RunStopped"), true);
-                    return;
+                    if (!await StageSelectedFilesAsync(true).ConfigureAwait(true))
+                    {
+                        AppendLog(Loc.Get("Auto_RunStopped"), true);
+                        return;
+                    }
+                }
+                else
+                {
+                    await AddAllAsync().ConfigureAwait(true);
                 }
             }
             else
             {
-                await AddAllAsync().ConfigureAwait(true);
+                AppendLog(Loc.Get("Auto_SkipStageClean"));
             }
 
-            if (AutoRunCommit && !await CommitAsync().ConfigureAwait(true))
+            if (AutoRunCommit)
             {
-                AppendLog(Loc.Get("Auto_RunStopped"), true);
-                return;
+                if (!await HasWorkingTreeChangesAsync().ConfigureAwait(true))
+                    AppendLog(Loc.Get("Auto_SkipCommitClean"));
+                else if (!await CommitAsync().ConfigureAwait(true))
+                {
+                    AppendLog(Loc.Get("Auto_RunStopped"), true);
+                    return;
+                }
             }
 
             if (AutoRunPush)
