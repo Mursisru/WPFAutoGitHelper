@@ -9,6 +9,7 @@
         <Setter Property="Padding" Value="8,6"/>
         <Setter Property="CaretBrush" Value="{DynamicResource BrushInputFg}"/>
         <Setter Property="SelectionBrush" Value="{DynamicResource BrushAccent}"/>
+        <Setter Property="SpellCheck.IsEnabled" Value="False"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
@@ -32,6 +33,10 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+    </Style>
+
+    <Style x:Key="InputTextBoxSpellStyle" TargetType="TextBox" BasedOn="{StaticResource InputTextBoxStyle}">
+        <Setter Property="SpellCheck.IsEnabled" Value="True"/>
     </Style>
 
     <Style TargetType="ComboBoxItem">
@@ -125,6 +130,7 @@
                                  CaretBrush="{DynamicResource BrushInputFg}"
                                  BorderThickness="0"
                                  Visibility="Hidden"
+                                 SpellCheck.IsEnabled="False"
                                  IsReadOnly="{TemplateBinding IsReadOnly}"/>
                         <Popup x:Name="Popup"
                                Placement="Bottom"

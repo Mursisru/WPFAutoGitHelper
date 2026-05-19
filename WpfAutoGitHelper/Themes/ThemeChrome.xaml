@@ -79,6 +79,15 @@
         <Setter Property="Margin" Value="0,0,0,5"/>
     </Style>
 
+    <Style x:Key="FieldHintStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{DynamicResource BrushMuted}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="Opacity" Value="0.88"/>
+        <Setter Property="Margin" Value="0,-2,0,8"/>
+        <Setter Property="LineHeight" Value="15"/>
+    </Style>
+
     <Style x:Key="MainTabItemStyle" TargetType="TabItem">
         <Setter Property="Foreground" Value="{DynamicResource BrushMuted}"/>
         <Setter Property="FontSize" Value="13"/>
@@ -419,6 +428,152 @@
 
     <Style TargetType="ScrollViewer">
         <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+    <!-- MSI BIOS-style segmented mode switch (EZ | Advanced | Auto Advanced) -->
+    <Style x:Key="BiosModeSegmentHostStyle" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource BrushLogBg}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BrushBorder}"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="3"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+    </Style>
+
+    <Style x:Key="BiosModeSegmentButtonBase" TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{DynamicResource BrushMuted}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="MinWidth" Value="88"/>
+        <Setter Property="MinHeight" Value="30"/>
+        <Setter Property="Padding" Value="12,4"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="SegmentBd"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="1"
+                            CornerRadius="2"
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          TextElement.Foreground="{TemplateBinding Foreground}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="SegmentBd" Property="Background" Value="{DynamicResource BrushAccent}"/>
+                            <Setter TargetName="SegmentBd" Property="BorderBrush" Value="{DynamicResource BrushAccentHover}"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="SegmentBd" Property="Background" Value="{DynamicResource BrushTabHover}"/>
+                            <Setter TargetName="SegmentBd" Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource BrushText}"/>
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsChecked" Value="True"/>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="SegmentBd" Property="Background" Value="{DynamicResource BrushAccentHover}"/>
+                        </MultiTrigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="BiosModeSegmentLeftStyle" TargetType="RadioButton" BasedOn="{StaticResource BiosModeSegmentButtonBase}">
+        <Setter Property="Margin" Value="0,0,2,0"/>
+    </Style>
+
+    <Style x:Key="BiosModeSegmentMiddleStyle" TargetType="RadioButton" BasedOn="{StaticResource BiosModeSegmentButtonBase}">
+        <Setter Property="Margin" Value="2,0,2,0"/>
+    </Style>
+
+    <Style x:Key="BiosModeSegmentRightStyle" TargetType="RadioButton" BasedOn="{StaticResource BiosModeSegmentButtonBase}">
+        <Setter Property="Margin" Value="2,0,0,0"/>
+    </Style>
+
+    <Style x:Key="HelpMiniTabItemStyle" TargetType="TabItem">
+        <Setter Property="Foreground" Value="{DynamicResource BrushMuted}"/>
+        <Setter Property="FontSize" Value="11.5"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Border x:Name="HelpTabBd"
+                            Margin="0,0,4,0"
+                            Background="{DynamicResource BrushTabInactive}"
+                            BorderBrush="{DynamicResource BrushBorder}"
+                            BorderThickness="1"
+                            CornerRadius="6,6,0,0"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter ContentSource="Header"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Margin="10,6,10,7"
+                                          TextElement.Foreground="{TemplateBinding Foreground}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="HelpTabBd" Property="Background" Value="{DynamicResource BrushTabSelected}"/>
+                            <Setter TargetName="HelpTabBd" Property="BorderBrush" Value="{DynamicResource BrushAccent}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource BrushHeader}"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="HelpTabBd" Property="Background" Value="{DynamicResource BrushTabHover}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource BrushText}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="HelpMiniTabControlStyle" TargetType="TabControl">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="ItemContainerStyle" Value="{StaticResource HelpMiniTabItemStyle}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabControl">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <TabPanel IsItemsHost="True" Background="Transparent"/>
+                        </ScrollViewer>
+                        <Border Grid.Row="1"
+                                Background="{DynamicResource BrushCardBg}"
+                                BorderBrush="{DynamicResource BrushBorder}"
+                                BorderThickness="1"
+                                CornerRadius="0,8,8,8"
+                                Padding="12"
+                                Margin="0,2,0,0">
+                            <ContentPresenter ContentSource="SelectedContent"/>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="HelpDetailTextStyle" TargetType="TextBlock">
+        <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="LineHeight" Value="20"/>
+        <Setter Property="Foreground" Value="{DynamicResource BrushText}"/>
+        <Setter Property="FontSize" Value="12.5"/>
     </Style>
 
 </ResourceDictionary>

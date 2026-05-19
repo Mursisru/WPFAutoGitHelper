@@ -21,6 +21,7 @@ namespace WpfAutoGitHelper.ViewModels
         private const string UnknownBranch = "-";
 
         private readonly AppSettings _settings;
+        private readonly GitOperationsService _gitOps = new GitOperationsService();
         private CancellationTokenSource _operationCts;
 
         private string _repoPath = "";
@@ -38,6 +39,7 @@ namespace WpfAutoGitHelper.ViewModels
         private string _selectedAccentId = AccentPalette.DefaultId;
         private string _selectedBackgroundId = BackgroundPalette.DefaultId;
         private bool _confirmCommit = true;
+        private bool _showFieldHints = true;
         private bool _autoRefreshOnSaveRepo = true;
         private string _releaseTag = "";
         private string _releaseTitle = "";
@@ -59,6 +61,8 @@ namespace WpfAutoGitHelper.ViewModels
             _selectedAccentId = AccentPalette.NormalizeId(_settings.AccentColor);
             _selectedBackgroundId = BackgroundPalette.NormalizeId(_settings.BackgroundColor);
             ConfirmCommit = _settings.ConfirmCommit;
+            ShowFieldHints = _settings.ShowFieldHints;
+            AutoRunCreateGithubRepo = _settings.AutoRunCreateGithubRepo;
             AutoRefreshOnSaveRepo = _settings.AutoRefreshOnSaveRepo;
             ReleaseTag = _settings.LastReleaseTag ?? "";
             ReleaseTitle = _settings.LastReleaseTitle ?? "";
@@ -87,6 +91,12 @@ namespace WpfAutoGitHelper.ViewModels
             OnPropertyChanged(nameof(SelectedAccent));
             OnPropertyChanged(nameof(SelectedBackground));
 
+            _gitOps.ResolveWorkingDirectory = () => HasValidRepo ? RepoPath : null;
+            _gitOps.SetBusy = SetBusyFromGitCommand;
+            _gitOps.IsBusySuppressed = () => _suppressGitCommandBusy;
+            _gitOps.GetCancellationToken = () => _operationCts?.Token ?? CancellationToken.None;
+            _gitOps.LogResult = (result, commandLabel) => LogResult(result, commandLabel);
+
             BrowseRepoCommand = new RelayCommand(BrowseRepo);
             CreateNewRepoCommand = new RelayCommand(async () => await CreateNewRepoAsync(), () => !IsBusy);
             SaveRepoCommand = new RelayCommand(async () => await SaveRepoAsync(), () => !IsBusy);
@@ -104,6 +114,7 @@ namespace WpfAutoGitHelper.ViewModels
             CreateReleaseCommand = new RelayCommand(async () => await CreateReleaseAsync(), () => HasValidRepo && !IsBusy);
             OpenReleasesCommand = new RelayCommand(async () => await OpenReleasesPageAsync(), () => HasValidRepo && !IsBusy);
             AddReleaseAssetsCommand = new RelayCommand(AddReleaseAssets, () => !IsBusy);
+            AddReleaseImagesCommand = new RelayCommand(AddReleaseImages, () => !IsBusy);
             RemoveReleaseAssetCommand = new RelayCommand(RemoveSelectedReleaseAsset, () => !IsBusy && SelectedReleaseAsset != null);
             AddReleaseBuildOutputCommand = new RelayCommand(async () => await AddReleaseBuildOutputAsync(), () => HasValidRepo && !IsBusy);
             LoadGitConfigCommand = new RelayCommand(async () => await LoadGitConfigAsync(), () => !IsBusy);
@@ -115,6 +126,9 @@ namespace WpfAutoGitHelper.ViewModels
             ClearLogCommand = new RelayCommand(ClearLog, () => !string.IsNullOrEmpty(LogText));
 
             InitAppDialogCommands();
+            InitOriginRemote();
+            InitUiMode();
+            InitAdvanced();
 
             _persistSettingsEnabled = true;
             PersistSettings();
@@ -178,6 +192,7 @@ namespace WpfAutoGitHelper.ViewModels
                 Loc.ApplyLanguage(code);
                 OnPropertyChanged(nameof(SelectedLanguageCode));
                 OnPropertyChanged(nameof(SelectedLanguage));
+                OnPropertyChanged(nameof(SpellCheckLanguageTag));
                 PersistSettings();
             }
         }
@@ -195,6 +210,7 @@ namespace WpfAutoGitHelper.ViewModels
                 Loc.ApplyLanguage(code);
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(SelectedLanguage));
+                OnPropertyChanged(nameof(SpellCheckLanguageTag));
                 PersistSettings();
             }
         }
@@ -363,7 +379,23 @@ namespace WpfAutoGitHelper.ViewModels
             }
         }
 
+        public bool ShowFieldHints
+        {
+            get => _showFieldHints;
+            set
+            {
+                if (_showFieldHints == value)
+                    return;
+                _showFieldHints = value;
+                OnPropertyChanged();
+                PersistSettings();
+            }
+        }
+
         public string BusyText => string.Format(Loc.Get("Busy_Format"), IsBusy);
+        public string SpellCheckLanguageTag => ToSpellCheckLanguageTag(SelectedLanguageCode);
+        public string SelectedProjectName => HasValidRepo ? Path.GetFileName(RepoPath.TrimEnd('\\', '/')) : UnknownBranch;
+        public string SelectedProjectFolder => HasValidRepo ? RepoPath : UnknownBranch;
 
         public string RepoPath
         {
@@ -375,6 +407,8 @@ namespace WpfAutoGitHelper.ViewModels
                 _repoPath = value ?? "";
                 OnPropertyChanged();
                 ValidateRepo();
+                OnPropertyChanged(nameof(SelectedProjectName));
+                OnPropertyChanged(nameof(SelectedProjectFolder));
             }
         }
 
@@ -448,6 +482,8 @@ namespace WpfAutoGitHelper.ViewModels
                     return;
                 _hasValidRepo = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(SelectedProjectName));
+                OnPropertyChanged(nameof(SelectedProjectFolder));
                 RelayCommandRaise();
             }
         }
@@ -544,6 +580,7 @@ namespace WpfAutoGitHelper.ViewModels
         public ICommand CreateReleaseCommand { get; }
         public ICommand OpenReleasesCommand { get; }
         public ICommand AddReleaseAssetsCommand { get; }
+        public ICommand AddReleaseImagesCommand { get; }
         public ICommand RemoveReleaseAssetCommand { get; }
         public ICommand AddReleaseBuildOutputCommand { get; }
         public ICommand LoadGitConfigCommand { get; }
@@ -562,8 +599,11 @@ namespace WpfAutoGitHelper.ViewModels
             RefreshAccentOptions();
             RefreshBackgroundOptions();
             Ui.NotifyAllProperties();
+            NotifyAdvUiLabels();
+            RebuildBranchPickerLists();
             OnPropertyChanged(nameof(BusyText));
             OnPropertyChanged(nameof(SelectedLanguage));
+            OnPropertyChanged(nameof(SpellCheckLanguageTag));
             LanguageChanged?.Invoke();
         }
 
@@ -643,12 +683,16 @@ namespace WpfAutoGitHelper.ViewModels
             _settings.AccentColor = SelectedAccentId;
             _settings.BackgroundColor = SelectedBackgroundId;
             _settings.ConfirmCommit = ConfirmCommit;
+            _settings.ShowFieldHints = ShowFieldHints;
+            _settings.AutoRunCreateGithubRepo = AutoRunCreateGithubRepo;
             _settings.AutoRefreshOnSaveRepo = AutoRefreshOnSaveRepo;
             _settings.LastCommitMessage = CommitMessage;
             _settings.LastReleaseTag = ReleaseTag;
             _settings.LastReleaseTitle = ReleaseTitle;
             _settings.LastReleaseNotes = ReleaseNotes;
             _settings.LastReleaseAssetPaths = ReleaseAssets.ToList();
+            _settings.UiMode = IsAutoAdvancedMode ? "auto-advanced" : (IsAdvancedMode ? "advanced" : "easy");
+            _settings.DefaultUiMode = DefaultUiModeIsAutoAdvanced ? "auto-advanced" : (DefaultUiModeIsAdvanced ? "advanced" : "easy");
             SettingsStore.Save(_settings);
         }
 
@@ -703,10 +747,9 @@ namespace WpfAutoGitHelper.ViewModels
                 return;
             }
 
-            IsBusy = true;
-            _operationCts?.Cancel();
-            _operationCts = new CancellationTokenSource();
-            var token = _operationCts.Token;
+            await RunWithBusyAsync(async () =>
+            {
+            var token = _operationCts?.Token ?? CancellationToken.None;
             try
             {
                 if (!await GitHubCliRunner.IsAuthenticatedAsync(token).ConfigureAwait(true))
@@ -782,10 +825,11 @@ namespace WpfAutoGitHelper.ViewModels
 
                 await RefreshStatusAsync();
             }
-            finally
+            catch (Exception ex)
             {
-                IsBusy = false;
+                AppendLog(ex.Message, true);
             }
+            }).ConfigureAwait(true);
         }
 
         private async Task<bool> ConfigureLocalIdentityForRepoAsync(string path, CancellationToken token)
@@ -1044,12 +1088,20 @@ namespace WpfAutoGitHelper.ViewModels
             if (!HasValidRepo)
                 return;
 
-            var branch = await RunGitLoggedAsync("branch", "--show-current");
-            if (branch.Success && !string.IsNullOrWhiteSpace(branch.StandardOutput))
-                CurrentBranch = branch.StandardOutput.Trim();
+            var resolved = await TryResolveBranchNameAsync().ConfigureAwait(true);
+            if (!string.IsNullOrWhiteSpace(resolved))
+            {
+                CurrentBranch = await IsRebaseInProgressAsync().ConfigureAwait(true)
+                    ? resolved + " (rebase)"
+                    : resolved;
+            }
 
             await RunGitLoggedAsync("status");
+            await RefreshHasAnyCommitAsync();
             await RefreshBranchesAsync();
+            await RefreshChangedFilesAsync();
+            await RefreshConflictFilesAsync();
+            await RefreshOriginRemoteUrlAsync();
         }
 
         private async Task RefreshBranchesAsync()
@@ -1068,22 +1120,64 @@ namespace WpfAutoGitHelper.ViewModels
 
             if (Branches.Count > 0 && string.IsNullOrWhiteSpace(SelectedBranch))
                 SelectedBranch = CurrentBranch != UnknownBranch ? CurrentBranch : Branches[0];
+
+            RebuildBranchPickerLists();
         }
 
-        private async Task PullAsync()
+        private async Task<bool> PullAsync()
         {
             var branch = await ResolveWorkingBranchAsync();
             if (branch == null)
-                return;
+                return false;
 
             await RunGitLoggedAsync("fetch", "origin");
-            await EnsureUpstreamAsync(branch);
 
-            var result = await RunGitLoggedAsync("pull", "--rebase", "origin", branch);
+            if (!HasAnyCommit)
+            {
+                AppendLog(Loc.Get("Auto_SkipPullNoCommits"));
+                await RefreshStatusAsync();
+                return true;
+            }
+
+            var remoteBranch = await GetOriginDefaultBranchAsync();
+            var pullBranch = await RemoteBranchExistsAsync(branch)
+                ? branch
+                : remoteBranch;
+
+            if (string.IsNullOrWhiteSpace(pullBranch) || !await RemoteBranchExistsAsync(pullBranch))
+            {
+                AppendLog(Loc.Get("Auto_SkipPullNoRemoteBranch"));
+                await RefreshStatusAsync();
+                return true;
+            }
+
+            if (await HasWorkingTreeChangesAsync().ConfigureAwait(true))
+            {
+                AppendLog(Loc.Get("Auto_SkipPullDirtyTree"));
+                await RefreshStatusAsync();
+                return true;
+            }
+
+            await EnsureUpstreamAsync(branch, pullBranch);
+
+            var result = await RunGitLoggedAsync("pull", "--rebase", "origin", pullBranch);
             if (!result.Success)
-                await RunGitLoggedAsync("pull", "origin", branch);
+                result = await RunGitLoggedAsync("pull", "origin", pullBranch);
 
             await RefreshStatusAsync();
+            if (result.Success)
+                return true;
+
+            if (IsAutoAdvancedMode)
+            {
+                var detail = (result.StandardOutput + result.StandardError).Trim();
+                if (string.IsNullOrWhiteSpace(detail))
+                    detail = Loc.Get("Auto_SkipPullFailed");
+                AppendLog(detail, true);
+                return true;
+            }
+
+            return false;
         }
 
         private async Task DiffAsync() => await RunGitLoggedAsync("diff");
@@ -1094,37 +1188,58 @@ namespace WpfAutoGitHelper.ViewModels
             await RefreshStatusAsync();
         }
 
-        private async Task CommitAsync()
+        private async Task<bool> CommitAsync()
         {
             if (string.IsNullOrWhiteSpace(CommitMessage))
             {
                 await NotifyAsync(Loc.Get("Msg_EnterCommit")).ConfigureAwait(true);
-                return;
+                return false;
             }
 
             if (ConfirmCommit &&
                 !await ConfirmAsync(Loc.Get("Msg_ConfirmCommit"), Loc.Get("Dlg_Commit")).ConfigureAwait(true))
-                return;
+                return false;
 
             _settings.LastCommitMessage = CommitMessage;
             SettingsStore.Save(_settings);
 
-            await RunGitLoggedAsync("commit", "-m", CommitMessage);
+            var commit = await RunGitLoggedAsync("commit", "-m", CommitMessage);
             await RefreshStatusAsync();
+
+            if (commit.Success)
+                return true;
+
+            var combined = commit.StandardOutput + commit.StandardError;
+            if (combined.IndexOf("nothing to commit", StringComparison.OrdinalIgnoreCase) >= 0)
+                await NotifyAsync(Loc.Get("Msg_NothingToCommit"), isError: true).ConfigureAwait(true);
+            else
+                await NotifyAsync(Loc.Get("Msg_CommitFailed"), isError: true).ConfigureAwait(true);
+
+            return false;
         }
 
         private Task PushAsync() => PublishToGitHubAsync(showSuccessDialog: false);
 
         private Task SyncToGitHubAsync() => PublishToGitHubAsync(showSuccessDialog: true);
 
-        private async Task PublishToGitHubAsync(bool showSuccessDialog)
+        private Task PublishToGitHubAsync(bool showSuccessDialog) =>
+            RunWithBusyAsync(() => PublishToGitHubCoreAsync(showSuccessDialog));
+
+        private async Task PublishToGitHubCoreAsync(bool showSuccessDialog)
         {
             var branch = await ResolveWorkingBranchAsync();
             if (branch == null)
                 return;
 
-            if (!await EnsureOriginRemoteAsync(forcePrompt: true).ConfigureAwait(true))
+            if (IsAutoAdvancedMode)
+            {
+                if (!await EnsureOriginForAutoAsync().ConfigureAwait(true))
+                    return;
+            }
+            else if (!await EnsureOriginRemoteAsync(forcePrompt: true).ConfigureAwait(true))
+            {
                 return;
+            }
 
             AppendLog(Loc.Get("Msg_SyncStarting"));
             await RunGitLoggedAsync("fetch", "origin");
@@ -1189,27 +1304,50 @@ namespace WpfAutoGitHelper.ViewModels
 
         private async Task<string> ResolveWorkingBranchAsync()
         {
-            if (CurrentBranch != UnknownBranch && !string.IsNullOrWhiteSpace(CurrentBranch))
-                return CurrentBranch.Trim();
+            var cached = StripRebaseSuffix(CurrentBranch);
+            if (!string.IsNullOrWhiteSpace(cached))
+                return cached;
 
-            var branch = await RunGitQuietAsync("branch", "--show-current");
-            if (branch.Success && !string.IsNullOrWhiteSpace(branch.StandardOutput))
+            var resolved = await TryResolveBranchNameAsync().ConfigureAwait(true);
+            if (!string.IsNullOrWhiteSpace(resolved))
             {
-                CurrentBranch = branch.StandardOutput.Trim();
-                return CurrentBranch;
+                CurrentBranch = await IsRebaseInProgressAsync().ConfigureAwait(true)
+                    ? resolved + " (rebase)"
+                    : resolved;
+                return resolved;
             }
 
             await NotifyAsync(Loc.Get("Msg_NoBranch"), isError: true).ConfigureAwait(true);
             return null;
         }
 
-        private async Task EnsureUpstreamAsync(string branch)
+        private static string StripRebaseSuffix(string branch)
         {
+            if (string.IsNullOrWhiteSpace(branch) || branch == UnknownBranch)
+                return null;
+
+            const string suffix = " (rebase)";
+            var trimmed = branch.Trim();
+            if (trimmed.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                return trimmed.Substring(0, trimmed.Length - suffix.Length).Trim();
+
+            return trimmed;
+        }
+
+        private async Task EnsureUpstreamAsync(string branch, string remoteBranch = null)
+        {
+            if (!HasAnyCommit)
+                return;
+
+            remoteBranch = string.IsNullOrWhiteSpace(remoteBranch) ? branch : remoteBranch.Trim();
+            if (!await RemoteBranchExistsAsync(remoteBranch))
+                return;
+
             var upstream = await RunGitQuietAsync("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}");
             if (upstream.Success && !string.IsNullOrWhiteSpace(upstream.StandardOutput))
                 return;
 
-            await RunGitLoggedAsync("branch", "--set-upstream-to=origin/" + branch, branch);
+            await RunGitLoggedAsync("branch", "--set-upstream-to=origin/" + remoteBranch, branch);
         }
 
         private async Task<bool> TryAutoCommitAllAsync()
@@ -1495,8 +1633,7 @@ namespace WpfAutoGitHelper.ViewModels
                 AssetPaths = ReleaseAssets.ToList(),
             };
 
-            IsBusy = true;
-            try
+            await RunWithBusyAsync(async () =>
             {
                 var result = await GitHubCliRunner.CreateReleaseAsync(RepoPath, request, CancellationToken.None)
                     .ConfigureAwait(true);
@@ -1509,11 +1646,7 @@ namespace WpfAutoGitHelper.ViewModels
                     PersistReleaseAssets();
                     await NotifyAsync(string.Format(Loc.Get("Msg_ReleaseCreated"), request.Tag)).ConfigureAwait(true);
                 }
-            }
-            finally
-            {
-                IsBusy = false;
-            }
+            }).ConfigureAwait(true);
         }
 
         private void AddReleaseAssets()
@@ -1522,6 +1655,29 @@ namespace WpfAutoGitHelper.ViewModels
             {
                 Title = Loc.Get("Dlg_ReleasePickFiles"),
                 Filter = Loc.Get("Dlg_ReleaseFileFilter"),
+                Multiselect = true,
+            };
+
+            if (dlg.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+                return;
+
+            var added = 0;
+            foreach (var file in dlg.FileNames)
+            {
+                if (AddReleaseAssetPath(file))
+                    added++;
+            }
+
+            if (added > 0)
+                PersistReleaseAssets();
+        }
+
+        private void AddReleaseImages()
+        {
+            var dlg = new System.Windows.Forms.OpenFileDialog
+            {
+                Title = Loc.Get("Dlg_ReleasePickImages"),
+                Filter = Loc.Get("Dlg_ReleaseImageFilter"),
                 Multiselect = true,
             };
 
@@ -1743,7 +1899,36 @@ namespace WpfAutoGitHelper.ViewModels
             if (branch.Success && !string.IsNullOrWhiteSpace(branch.StandardOutput))
                 return branch.StandardOutput.Trim();
 
+            var headFile = await ReadGitHeadBranchFileInDirectoryAsync(repoPath, "rebase-merge/head-name").ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(headFile))
+                return headFile;
+
+            headFile = await ReadGitHeadBranchFileInDirectoryAsync(repoPath, "rebase-apply/head-name").ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(headFile))
+                return headFile;
+
             return "main";
+        }
+
+        private static async Task<string> ReadGitHeadBranchFileInDirectoryAsync(string repoPath, string relativePath)
+        {
+            if (string.IsNullOrWhiteSpace(repoPath))
+                return null;
+
+            var gitDirResult = await GitRunner.RunAsync(repoPath, CancellationToken.None, "rev-parse", "--git-dir").ConfigureAwait(false);
+            if (!gitDirResult.Success || string.IsNullOrWhiteSpace(gitDirResult.StandardOutput))
+                return null;
+
+            var gitDir = gitDirResult.StandardOutput.Trim();
+            if (!Path.IsPathRooted(gitDir))
+                gitDir = Path.GetFullPath(Path.Combine(repoPath, gitDir));
+
+            var filePath = Path.Combine(gitDir, relativePath.Replace('/', Path.DirectorySeparatorChar));
+            if (!File.Exists(filePath))
+                return null;
+
+            var text = (await Task.Run(() => File.ReadAllText(filePath)).ConfigureAwait(false)).Trim();
+            return NormalizeRefsHeadsBranch(text);
         }
 
         private void ValidateRepo()
@@ -1775,13 +1960,9 @@ namespace WpfAutoGitHelper.ViewModels
             if (string.IsNullOrWhiteSpace(workDir) || !Directory.Exists(workDir))
                 return new GitRunResult { ExitCode = -1, StandardError = Loc.Get("Msg_NoValidRepo") };
 
-            var manageBusy = !IsBusy;
+            var manageBusy = _busyScopeDepth == 0;
             if (manageBusy)
-            {
-                IsBusy = true;
-                _operationCts?.Cancel();
-                _operationCts = new CancellationTokenSource();
-            }
+                EnterBusyScope();
 
             var token = cancellationToken.CanBeCanceled
                 ? cancellationToken
@@ -1794,7 +1975,7 @@ namespace WpfAutoGitHelper.ViewModels
             finally
             {
                 if (manageBusy)
-                    IsBusy = false;
+                    ExitBusyScope();
             }
         }
 
@@ -1813,19 +1994,25 @@ namespace WpfAutoGitHelper.ViewModels
             if (!HasValidRepo && !isGlobalConfig)
                 return new GitRunResult { ExitCode = -1, StandardError = Loc.Get("Msg_NoValidRepo") };
 
-            var workDir = HasValidRepo ? RepoPath : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            if (isGlobalConfig)
+            {
+                var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                var manageBusy = _busyScopeDepth == 0 && !_suppressGitCommandBusy;
+                if (manageBusy)
+                    EnterBusyScope();
+                try
+                {
+                    var token = _operationCts?.Token ?? CancellationToken.None;
+                    return await GitRunner.RunAsync(home, token, args).ConfigureAwait(true);
+                }
+                finally
+                {
+                    if (manageBusy)
+                        ExitBusyScope();
+                }
+            }
 
-            IsBusy = true;
-            _operationCts?.Cancel();
-            _operationCts = new CancellationTokenSource();
-            try
-            {
-                return await GitRunner.RunAsync(workDir, _operationCts.Token, args).ConfigureAwait(true);
-            }
-            finally
-            {
-                IsBusy = false;
-            }
+            return await _gitOps.RunQuietAsync(args).ConfigureAwait(true);
         }
 
         private void LogResult(GitRunResult result, string commandLabel)
@@ -1853,5 +2040,27 @@ namespace WpfAutoGitHelper.ViewModels
 
         private void OnPropertyChanged([CallerMemberName] string name = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+        private static string ToSpellCheckLanguageTag(string code)
+        {
+            switch (Loc.Normalize(code))
+            {
+                case "ru": return "ru-RU";
+                case "uk": return "uk-UA";
+                case "de": return "de-DE";
+                case "fr": return "fr-FR";
+                case "es": return "es-ES";
+                case "pt": return "pt-PT";
+                case "pl": return "pl-PL";
+                case "it": return "it-IT";
+                case "nl": return "nl-NL";
+                case "tr": return "tr-TR";
+                case "zh": return "zh-CN";
+                case "ja": return "ja-JP";
+                case "ko": return "ko-KR";
+                case "cs": return "cs-CZ";
+                default: return "en-US";
+            }
+        }
     }
 }

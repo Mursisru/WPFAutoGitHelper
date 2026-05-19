@@ -1,7 +1,10 @@
 <Window x:Class="WpfAutoGitHelper.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:WpfAutoGitHelper.Views"
+        Language="{Binding SpellCheckLanguageTag, ConverterCulture=en-US}"
         Style="{StaticResource AppWindowStyle}"
+        KeyDown="OnWindowKeyDown"
         Title="{Binding Ui.AppTitle}"
         Height="740" Width="980"         MinHeight="500" MinWidth="680">
     <Grid Margin="14">
@@ -17,12 +20,39 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <Border Grid.Column="0" Width="4" Background="{DynamicResource BrushAccent}"
                         CornerRadius="2" Margin="0,4,14,4"/>
                 <StackPanel Grid.Column="1">
                     <TextBlock Style="{StaticResource HeaderTitleStyle}" Text="{Binding Ui.AppTitle}"/>
                     <TextBlock Style="{StaticResource HeaderSubtitleStyle}" Text="{Binding Ui.AppSubtitle}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <Border Style="{StaticResource BiosModeSegmentHostStyle}"
+                            ToolTip="{Binding Ui.UiModeToggleTip}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <RadioButton Grid.Column="0" GroupName="UiModeHeader"
+                                         Style="{StaticResource BiosModeSegmentLeftStyle}"
+                                         Content="{Binding Ui.UiModeEasy}"
+                                         IsChecked="{Binding IsEasyMode, Mode=TwoWay}"/>
+                            <RadioButton Grid.Column="1" GroupName="UiModeHeader"
+                                         Style="{StaticResource BiosModeSegmentMiddleStyle}"
+                                         Content="{Binding Ui.UiModeAdvanced}"
+                                         IsChecked="{Binding IsAdvancedMode, Mode=TwoWay}"/>
+                            <RadioButton Grid.Column="2" GroupName="UiModeHeader"
+                                         Style="{StaticResource BiosModeSegmentRightStyle}"
+                                         Content="{Binding Ui.UiModeAutoAdvanced}"
+                                         IsChecked="{Binding IsAutoAdvancedMode, Mode=TwoWay}"/>
+                        </Grid>
+                    </Border>
+                    <TextBlock Text="F7" FontSize="10" Foreground="{DynamicResource BrushMuted}"
+                               HorizontalAlignment="Center" Margin="0,5,0,0"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -37,12 +67,29 @@
                                    Text="{Binding CurrentBranch}" Margin="8,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
+                <Border Style="{StaticResource BranchBadgeStyle}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Foreground="{DynamicResource BrushMuted}" FontSize="12"
+                                   Text="{Binding Ui.RepoSelectedProject}" VerticalAlignment="Center"/>
+                        <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource BrushAccent}"
+                                   Text="{Binding SelectedProjectName}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource BranchBadgeStyle}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Foreground="{DynamicResource BrushMuted}" FontSize="12"
+                                   Text="{Binding Ui.RepoSelectedFolder}" VerticalAlignment="Center"/>
+                        <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource BrushText}"
+                                   Text="{Binding SelectedProjectFolder}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
                 <TextBlock Foreground="{DynamicResource BrushMuted}" FontSize="12"
                            Text="{Binding BusyText}" VerticalAlignment="Center"/>
             </WrapPanel>
         </Border>
 
-        <TabControl Grid.Row="2" Style="{StaticResource MainTabControlStyle}"
+        <TabControl x:Name="EzTabControl" Grid.Row="2" Style="{StaticResource MainTabControlStyle}"
+                    Visibility="{Binding IsEasyMode, Converter={StaticResource BoolToVis}}"
                     SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}">
 
             <!-- 1. Actions workflow -->
@@ -56,11 +103,13 @@
                                 <TextBlock Style="{StaticResource FieldLabelStyle}"
                                            Text="{Binding Ui.RepoHint}" Margin="0,0,0,8" TextWrapping="Wrap"
                                            FontWeight="Normal"/>
-                                <ComboBox Style="{StaticResource InputComboBoxStyle}" Margin="0,0,0,8"
+                                <ComboBox Style="{StaticResource InputComboBoxStyle}" Margin="0,0,0,4"
                                           IsEditable="True"
                                           Text="{Binding RepoPath, UpdateSourceTrigger=PropertyChanged}"
                                           ItemsSource="{Binding RecentRepoPaths}"
                                           ToolTip="{Binding Ui.RepoPathTip}"/>
+                                <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintEzRepoPath}"
+                                           Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
                                 <WrapPanel>
                                     <Button Style="{StaticResource SecondaryButtonStyle}"
                                             Content="{Binding Ui.BtnBrowse}" Command="{Binding BrowseRepoCommand}"
@@ -152,11 +201,13 @@
                                 <TextBlock Text="{Binding Ui.PublishHint}" TextWrapping="Wrap"
                                            Foreground="{DynamicResource BrushMuted}" FontSize="11.5" Margin="0,0,0,12" LineHeight="18"/>
                                 <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.CommitHeader}"/>
-                                <TextBox Style="{StaticResource InputTextBoxStyle}"
+                                <TextBox Style="{StaticResource InputTextBoxSpellStyle}"
                                          Text="{Binding CommitMessage, UpdateSourceTrigger=PropertyChanged}"
                                          AcceptsReturn="True" MinHeight="72" MaxHeight="140"
                                          TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
-                                         Margin="0,0,0,10"/>
+                                         Margin="0,0,0,4"/>
+                                <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintEzCommitMessage}"
+                                           Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
                                 <WrapPanel>
                                     <Button Style="{StaticResource PrimaryButtonStyle}"
                                             Content="{Binding Ui.BtnSyncGitHub}" Command="{Binding SyncToGitHubCommand}"
@@ -192,10 +243,10 @@
                             <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,10"
                                      Text="{Binding ReleaseTag, UpdateSourceTrigger=PropertyChanged}"/>
                             <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.ReleaseTitle}"/>
-                            <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,10"
+                            <TextBox Style="{StaticResource InputTextBoxSpellStyle}" Margin="0,0,0,10"
                                      Text="{Binding ReleaseTitle, UpdateSourceTrigger=PropertyChanged}"/>
                             <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.ReleaseNotes}"/>
-                            <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,10"
+                            <TextBox Style="{StaticResource InputTextBoxSpellStyle}" Margin="0,0,0,10"
                                      Text="{Binding ReleaseNotes, UpdateSourceTrigger=PropertyChanged}"
                                      AcceptsReturn="True" MinHeight="96" MaxHeight="180"
                                      TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
@@ -218,6 +269,9 @@
                                 <Button Style="{StaticResource SecondaryButtonStyle}"
                                         Content="{Binding Ui.BtnReleaseAddFiles}" Command="{Binding AddReleaseAssetsCommand}"
                                         ToolTip="{Binding Ui.TipReleaseAddFiles}" MinWidth="120"/>
+                                <Button Style="{StaticResource SecondaryButtonStyle}"
+                                        Content="{Binding Ui.BtnReleaseAddImages}" Command="{Binding AddReleaseImagesCommand}"
+                                        ToolTip="{Binding Ui.TipReleaseAddImages}" MinWidth="128"/>
                                 <Button Style="{StaticResource SecondaryButtonStyle}"
                                         Content="{Binding Ui.BtnReleaseAddBuild}" Command="{Binding AddReleaseBuildOutputCommand}"
                                         ToolTip="{Binding Ui.TipReleaseAddBuild}" MinWidth="168"/>
@@ -348,8 +402,17 @@
                             </Grid>
                             <CheckBox Content="{Binding Ui.SettingsConfirmCommit}" Margin="0,0,0,8"
                                       IsChecked="{Binding ConfirmCommit}"/>
-                            <CheckBox Content="{Binding Ui.SettingsAutoRefresh}" Margin="0,0,0,12"
+                            <CheckBox Content="{Binding Ui.SettingsShowFieldHints}" Margin="0,0,0,8"
+                                      IsChecked="{Binding ShowFieldHints}"/>
+                            <CheckBox Content="{Binding Ui.SettingsAutoRefresh}" Margin="0,0,0,8"
                                       IsChecked="{Binding AutoRefreshOnSaveRepo}"/>
+                            <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.SettingsDefaultUiMode}" Margin="0,0,0,6"/>
+                            <RadioButton GroupName="DefaultUiModeEz" Content="{Binding Ui.UiModeEasy}"
+                                         IsChecked="{Binding DefaultUiModeIsEasy, Mode=TwoWay}" Margin="0,0,0,4"/>
+                            <RadioButton GroupName="DefaultUiModeEz" Content="{Binding Ui.UiModeAdvanced}"
+                                         IsChecked="{Binding DefaultUiModeIsAdvanced, Mode=TwoWay}" Margin="0,0,0,4"/>
+                            <RadioButton GroupName="DefaultUiModeEz" Content="{Binding Ui.UiModeAutoAdvanced}"
+                                         IsChecked="{Binding DefaultUiModeIsAutoAdvanced, Mode=TwoWay}" Margin="0,0,0,12"/>
                             <TextBlock Foreground="{DynamicResource BrushMuted}" FontSize="11" TextWrapping="Wrap"
                                        Text="{Binding Ui.SettingsAutoSaveHint}" Margin="0,0,0,12"/>
                             <Button Style="{StaticResource SecondaryButtonStyle}"
@@ -362,6 +425,10 @@
             </TabItem>
 
         </TabControl>
+
+        <views:AdvancedModeView Grid.Row="2"
+                                Visibility="{Binding IsAnyAdvancedMode, Converter={StaticResource BoolToVis}}"
+                                DataContext="{Binding}"/>
         </Grid>
 
         <Grid Panel.ZIndex="20"

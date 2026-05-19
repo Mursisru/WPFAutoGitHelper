@@ -1,5 +1,43 @@
 # Changelog
 
+## 1.5.0 Build PR-R1P7 — 2026-05-19 (pre-release)
+
+### Changed
+- **Draft branch push** creates/updates the branch on **GitHub** (`origin`) via `HEAD:refs/heads/<name>` — no local `checkout -b`.
+- **Auto Run:** empty draft field → normal push; filled field → draft push on origin.
+
+### Fixed
+- **Auto validation:** no false «no files selected» when changes exist but checkboxes are empty (`git add -A` fallback; auto-select on refresh in Auto).
+- **Auto pull:** skipped with log when working tree is dirty or pull fails (unrelated histories, etc.) — run continues.
+
+## 1.5.0 Build PR-R1P6 — 2026-05-19 (pre-release)
+
+### Fixed
+- Busy state lock (`Busy: True`) after long/failed Auto runs.
+- Removed recursive refresh loop in Auto preview/status flow.
+- Unified busy scope for long workflows to avoid nested busy toggles/cancellation races.
+- Improved git process cancellation/exit handling to prevent stuck operations.
+
+## 1.5.0 Build PR-R1P5 — 2026-05-19 (pre-release)
+
+### Fixed
+- **Auto Run** on new repo (no commits): auto `git add -A` for initial commit when nothing is checked.
+- **Auto Run** stops on first error (no false «finished» / «draft sent» after failed steps).
+- **Commit / draft push** report failure when `git` exits non-zero.
+- **Pull** skipped when there are no commits; uses **origin/main** when local branch has no remote ref.
+
+## 1.5.0 Build PR-R1P4 — 2026-05-19 (pre-release)
+
+Pre-release channel copy (`GITHUB local\pre-release\WpfAutoGitHelper`). Target GitHub release: **1.5.0**.
+
+### Added / changed (since 1.4.4)
+- **EZ / Advanced / Auto Advanced** UI modes (F7, MSI BIOS segment toggle).
+- **Auto Advanced:** all tabs visible; unique tab names; Run scenario; origin URL on Project tab; file checkboxes; Create GitHub repo on Run.
+- **Advanced:** index, push & draft, branches & merge, file manager, safety log, nested help tabs, field hints.
+- **Branch pickers:** **(none)** option for delete local/remote, merge source, revert commit list.
+- **Push & draft:** empty draft field = normal push; filled = draft branch push.
+- **Spellcheck** only on commit message, release title/notes, new repo description.
+
 ## 1.4.4 — 2026-05-16
 
 ### Changed

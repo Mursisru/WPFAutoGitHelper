@@ -22,7 +22,7 @@
             <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
 
             <TextBlock Foreground="{DynamicResource BrushMuted}" Text="{Binding LabelDescription}" Margin="0,0,0,4"/>
-            <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+            <TextBox Style="{StaticResource InputTextBoxSpellStyle}" Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
                      AcceptsReturn="True" TextWrapping="Wrap" MinHeight="56" MaxHeight="120"
                      VerticalScrollBarVisibility="Auto" Margin="0,0,0,10"/>
 
