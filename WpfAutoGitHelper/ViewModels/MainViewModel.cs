@@ -1579,44 +1579,62 @@ namespace WpfAutoGitHelper.ViewModels
             PersistSettings();
         }
 
-        private async Task CreateReleaseAsync()
+        private async Task<bool> CreateReleaseAsync()
         {
             if (!GitHubCliRunner.IsAvailable())
             {
-                await NotifyAsync(Loc.Get("Msg_ReleaseGhRequired")).ConfigureAwait(true);
-                return;
+                await NotifyAsync(Loc.Get("Msg_ReleaseGhRequired"), isError: true).ConfigureAwait(true);
+                return false;
             }
 
             if (string.IsNullOrWhiteSpace(ReleaseTag))
             {
-                await NotifyAsync(Loc.Get("Msg_ReleaseTagRequired")).ConfigureAwait(true);
-                return;
+                await NotifyAsync(Loc.Get("Msg_ReleaseTagRequired"), isError: true).ConfigureAwait(true);
+                return false;
             }
-
-            var target = ReleaseTargetBranch;
-            if (string.IsNullOrWhiteSpace(target) && CurrentBranch != UnknownBranch)
-                target = CurrentBranch;
 
             if (ReleaseLatest && ReleasePrerelease)
             {
-                await NotifyAsync(Loc.Get("Msg_ReleaseLatestPrereleaseConflict")).ConfigureAwait(true);
-                return;
+                await NotifyAsync(Loc.Get("Msg_ReleaseLatestPrereleaseConflict"), isError: true).ConfigureAwait(true);
+                return false;
             }
 
-            if (!await EnsureOriginRemoteAsync(forcePrompt: true).ConfigureAwait(true))
-                return;
+            if (!await EnsureOriginRemoteAsync(forcePrompt: IsAutoAdvancedMode ? false : true).ConfigureAwait(true))
+                return false;
+
+            var requested = ReleaseTargetBranch?.Trim();
+            if (string.IsNullOrWhiteSpace(requested))
+            {
+                var current = StripRebaseSuffix(CurrentBranch);
+                if (!string.IsNullOrWhiteSpace(current))
+                    requested = current;
+            }
+
+            var resolved = await ResolveReleaseTargetBranchAsync().ConfigureAwait(true);
+            if (string.IsNullOrWhiteSpace(resolved))
+            {
+                await NotifyAsync(Loc.Get("Msg_ReleaseTargetBranchInvalid"), isError: true).ConfigureAwait(true);
+                return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(requested) &&
+                !string.Equals(requested, resolved, StringComparison.OrdinalIgnoreCase))
+                AppendLog(string.Format(Loc.Get("Msg_ReleaseTargetBranchFallback"), requested, resolved));
+
+            AppendLog(string.Format(Loc.Get("Msg_ReleaseTargetBranchResolved"), resolved));
 
             var request = new ReleaseRequest
             {
                 Tag = ReleaseTag.Trim(),
                 Title = ReleaseTitle?.Trim(),
                 Notes = ReleaseNotes?.Trim(),
-                TargetBranch = string.IsNullOrWhiteSpace(target) ? null : target.Trim(),
+                TargetBranch = resolved,
                 IsLatest = ReleaseLatest,
                 IsPrerelease = ReleasePrerelease,
                 AssetPaths = ReleaseAssets.ToList(),
             };
 
+            var success = false;
             await RunWithBusyAsync(async () =>
             {
                 var result = await GitHubCliRunner.CreateReleaseAsync(RepoPath, request, CancellationToken.None)
@@ -1629,8 +1647,15 @@ namespace WpfAutoGitHelper.ViewModels
                 {
                     PersistReleaseAssets();
                     await NotifyAsync(string.Format(Loc.Get("Msg_ReleaseCreated"), request.Tag)).ConfigureAwait(true);
+                    success = true;
+                }
+                else
+                {
+                    await NotifyAsync(Loc.Get("Msg_ReleaseCreateFailed"), isError: true).ConfigureAwait(true);
                 }
             }).ConfigureAwait(true);
+
+            return success;
         }
 
         private void AddReleaseAssets()

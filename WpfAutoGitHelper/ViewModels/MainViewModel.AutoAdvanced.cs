@@ -135,7 +135,7 @@ namespace WpfAutoGitHelper.ViewModels
                     sb.AppendLine($"- {Loc.Get("Btn_Push")}");
             }
             if (AutoRunCreateRelease)
-                sb.AppendLine($"- {Loc.Get("Btn_CreateRelease")}");
+                sb.AppendLine($"- {Loc.Get("Btn_CreateRelease")}: {ReleaseTag?.Trim()} ({Loc.Get("Auto_ReleaseTargetHint")})");
 
             if (!includeValidation)
                 return sb.ToString().TrimEnd();
@@ -255,8 +255,11 @@ namespace WpfAutoGitHelper.ViewModels
                 }
             }
 
-            if (AutoRunCreateRelease)
-                await CreateReleaseAsync().ConfigureAwait(true);
+            if (AutoRunCreateRelease && !await CreateReleaseAsync().ConfigureAwait(true))
+            {
+                AppendLog(Loc.Get("Auto_RunStopped"), true);
+                return;
+            }
 
             await RefreshStatusAsync().ConfigureAwait(true);
             AutoActionPreview = BuildAutoActionPreview(includeValidation: true, out _);

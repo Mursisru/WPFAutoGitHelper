@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.0 Build PR-R1P10 — 2026-05-19 (pre-release)
+
+### Fixed
+- **Auto / Create release:** resolves release target branch on **origin** (upstream, draft branch name, `main`) — fixes `target_commitish is invalid` when local branch name differs from remote (e.g. `development-test` vs `dev-test`).
+- **Auto Run:** release step failure stops the scenario (no false «finished»).
+
 ## 1.5.0 Build PR-R1P9 — 2026-05-19 (pre-release)
 
 ### Fixed
