@@ -84,27 +84,54 @@ namespace WpfAutoGitHelper.ViewModels
             if (!await IsRebaseInProgressAsync().ConfigureAwait(true))
                 return true;
 
-            if (await HasWorkingTreeChangesAsync().ConfigureAwait(true))
-            {
-                AppendLog(Loc.Get("Msg_RebaseInProgressDirty"), true);
-                return false;
-            }
-
-            AppendLog(Loc.Get("Msg_RebaseAutoContinue"));
+            AppendLog(Loc.Get("Msg_RebaseAutoRecover"));
             const int maxSteps = 32;
             for (var step = 0; step < maxSteps; step++)
             {
                 if (!await IsRebaseInProgressAsync().ConfigureAwait(true))
                     return true;
 
-                if (await HasWorkingTreeChangesAsync().ConfigureAwait(true))
+                if (await HasMergeConflictsInTreeAsync().ConfigureAwait(true))
                 {
-                    AppendLog(Loc.Get("Msg_RebaseInProgressDirty"), true);
+                    if (await TryAutoResolveKnownConflictsAsync().ConfigureAwait(true))
+                    {
+                        if (!await HasMergeConflictsInTreeAsync().ConfigureAwait(true) &&
+                            await TryContinueRebaseAsync().ConfigureAwait(true))
+                            continue;
+                    }
+
+                    if (await HasMergeConflictsInTreeAsync().ConfigureAwait(true) &&
+                        await TryAutoRebaseSkipCurrentPickAsync().ConfigureAwait(true))
+                        continue;
+
+                    AppendLog(Loc.Get("Msg_RebaseConflicts"), true);
                     return false;
                 }
 
+                if (await HasWorkingTreeChangesAsync().ConfigureAwait(true))
+                {
+                    if (!await TryStageAndCommitRebaseChangesAsync().ConfigureAwait(true))
+                    {
+                        AppendLog(Loc.Get("Msg_RebaseInProgressDirty"), true);
+                        return false;
+                    }
+                }
+
                 if (!await TryContinueRebaseAsync().ConfigureAwait(true))
-                    return false;
+                {
+                    if (await HasMergeConflictsInTreeAsync().ConfigureAwait(true))
+                    {
+                        if (await TryAutoResolveKnownConflictsAsync().ConfigureAwait(true) &&
+                            await TryContinueRebaseAsync().ConfigureAwait(true))
+                            continue;
+
+                        if (await TryAutoRebaseSkipCurrentPickAsync().ConfigureAwait(true))
+                            continue;
+                    }
+
+                    if (await IsRebaseInProgressAsync().ConfigureAwait(true))
+                        return false;
+                }
             }
 
             if (await IsRebaseInProgressAsync().ConfigureAwait(true))
@@ -113,7 +140,39 @@ namespace WpfAutoGitHelper.ViewModels
                 return false;
             }
 
+            AppendLog(Loc.Get("Msg_RebaseFinished"));
             return true;
+        }
+
+        private async Task<bool> TryStageAndCommitRebaseChangesAsync()
+        {
+            AppendLog(Loc.Get("Msg_RebaseAutoStage"));
+            var add = await RunGitLoggedAsync("add", "-A").ConfigureAwait(true);
+            if (!add.Success)
+                return false;
+
+            var status = await RunGitQuietAsync("status").ConfigureAwait(true);
+            var text = (status.StandardOutput ?? "") + (status.StandardError ?? "");
+            var editing = text.IndexOf("currently editing a commit", StringComparison.OrdinalIgnoreCase) >= 0
+                || text.IndexOf("You are currently editing", StringComparison.OrdinalIgnoreCase) >= 0;
+
+            if (editing)
+            {
+                AppendLog(Loc.Get("Msg_RebaseAutoAmend"));
+                var amend = await RunGitLoggedAsync("commit", "--amend", "--no-edit").ConfigureAwait(true);
+                return amend.Success;
+            }
+
+            var porcelain = await RunGitQuietAsync("status", "--porcelain").ConfigureAwait(true);
+            if (!porcelain.Success || string.IsNullOrWhiteSpace(porcelain.StandardOutput))
+                return true;
+
+            var message = string.IsNullOrWhiteSpace(CommitMessage)
+                ? Loc.Get("Msg_RebaseAutoCommitMessage")
+                : CommitMessage.Trim();
+            AppendLog(Loc.Get("Msg_RebaseAutoCommit"));
+            var commit = await RunGitLoggedAsync("commit", "-m", message).ConfigureAwait(true);
+            return commit.Success;
         }
     }
 }

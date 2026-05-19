@@ -1126,6 +1126,13 @@ namespace WpfAutoGitHelper.ViewModels
 
         private async Task<bool> PullAsync()
         {
+            if (await IsRebaseInProgressAsync().ConfigureAwait(true))
+            {
+                AppendLog(Loc.Get("Auto_SkipPullRebaseInProgress"));
+                await RefreshStatusAsync();
+                return true;
+            }
+
             var branch = await ResolveWorkingBranchAsync();
             if (branch == null)
                 return false;
@@ -1444,37 +1451,6 @@ namespace WpfAutoGitHelper.ViewModels
 
             return status.StandardOutput.IndexOf("rebase in progress", StringComparison.OrdinalIgnoreCase) >= 0
                 || status.StandardOutput.IndexOf("currently rebasing", StringComparison.OrdinalIgnoreCase) >= 0;
-        }
-
-        private async Task<bool> TryAutoResolveKnownConflictsAsync()
-        {
-            var resolved = false;
-            var status = await RunGitQuietAsync("status", "--porcelain");
-            if (!status.Success || string.IsNullOrWhiteSpace(status.StandardOutput))
-                return false;
-
-            foreach (var line in status.StandardOutput.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
-            {
-                if (line.Length < 4)
-                    continue;
-
-                var path = line.Substring(3).Trim();
-                if (string.IsNullOrEmpty(path) || !IsAutoResolvableReleaseArtifact(path))
-                    continue;
-
-                var code = line.Substring(0, 2);
-                if (code[0] != 'U' && code[1] != 'U' && code.IndexOf('D') < 0)
-                    continue;
-
-                var rm = await RunGitLoggedAsync("rm", "-f", "--", path);
-                if (rm.Success)
-                {
-                    resolved = true;
-                    AppendLog(string.Format(Loc.Get("Msg_SyncResolvedConflict"), path));
-                }
-            }
-
-            return resolved;
         }
 
         private static bool IsAutoResolvableReleaseArtifact(string path)

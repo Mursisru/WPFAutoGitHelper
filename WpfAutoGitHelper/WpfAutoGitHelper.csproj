@@ -126,6 +126,7 @@
     <Compile Include="ViewModels\MainViewModel.BusyScope.cs" />
     <Compile Include="ViewModels\MainViewModel.DraftBranch.cs" />
     <Compile Include="ViewModels\MainViewModel.BranchResolve.cs" />
+    <Compile Include="ViewModels\MainViewModel.AutoConflictResolve.cs" />
     <Compile Include="Localization\Loc.cs" />
     <Compile Include="Localization\LocResources.cs" />
     <Compile Include="Localization\LocResourcesMore.cs" />
