@@ -1,0 +1,647 @@
+<UserControl x:Class="WpfAutoGitHelper.Views.AdvancedModeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <Style x:Key="AdvPrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="MinWidth" Value="140"/>
+            <Setter Property="MaxWidth" Value="280"/>
+            <Setter Property="Margin" Value="0,0,8,6"/>
+        </Style>
+        <Style x:Key="AdvSecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
+            <Setter Property="MinWidth" Value="140"/>
+            <Setter Property="MaxWidth" Value="280"/>
+            <Setter Property="Margin" Value="0,0,8,6"/>
+        </Style>
+        <Style x:Key="AdvCompactButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
+            <Setter Property="MinWidth" Value="96"/>
+            <Setter Property="Margin" Value="0,0,8,6"/>
+        </Style>
+        <Style x:Key="AutoTabIntroStyle" TargetType="TextBlock">
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Foreground" Value="{DynamicResource BrushMuted}"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="LineHeight" Value="17"/>
+        </Style>
+    </UserControl.Resources>
+    <TabControl Style="{StaticResource MainTabControlStyle}"
+                SelectedIndex="{Binding AdvancedTabIndex, Mode=TwoWay}">
+        <TabItem Header="{Binding AdvTabWorkflow}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="4">
+                    <TextBlock Text="{Binding AutoModeBanner}" TextWrapping="Wrap" Margin="0,0,0,10"
+                               Foreground="{DynamicResource BrushAccent}" FontSize="12"
+                               Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource BoolToVis}}"/>
+                    <TextBlock Style="{StaticResource AutoTabIntroStyle}" Text="{Binding AutoIntroWorkflow}"
+                               Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource BoolToVis}}"/>
+                    <GroupBox Style="{StaticResource CardGroupStyle}" Header="{Binding AdvHdrStep1Repo}">
+                        <StackPanel>
+                            <ComboBox Style="{StaticResource InputComboBoxStyle}" Margin="0,0,0,4" IsEditable="True"
+                                      Text="{Binding RepoPath, UpdateSourceTrigger=PropertyChanged}"
+                                      ItemsSource="{Binding RecentRepoPaths}"
+                                      ContextMenu="{StaticResource RepoPathContextMenu}"/>
+                            <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintAdvRepoPath}"
+                                       Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                            <WrapPanel Style="{StaticResource ToolbarWrapPanelStyle}">
+                                <Button Style="{StaticResource AdvPrimaryButtonStyle}" Content="{Binding Ui.BtnCreateNewRepo}" Command="{Binding CreateNewRepoCommand}"
+                                        ToolTip="{Binding Ui.TipCreateNewRepo}"/>
+                                <Button Style="{StaticResource AdvCompactButtonStyle}" Content="{Binding Ui.BtnBrowse}" Command="{Binding BrowseRepoCommand}"/>
+                                <Button Style="{StaticResource AdvCompactButtonStyle}" Content="{Binding Ui.BtnSaveRepo}" Command="{Binding SaveRepoCommand}"/>
+                                <Button Style="{StaticResource AdvCompactButtonStyle}" Content="{Binding Ui.BtnStatus}" Command="{Binding RefreshStatusCommand}"/>
+                            </WrapPanel>
+                            <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintAdvCreateNewRepo}" Margin="0,4,0,0"
+                                       Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                            <StackPanel Margin="0,10,0,0"
+                                        Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{Binding Ui.LabelOriginUrl}" Margin="0,0,0,4"/>
+                                <TextBox Style="{StaticResource InputTextBoxStyle}"
+                                         Text="{Binding OriginRemoteUrl, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintAutoOriginUrl}"
+                                           Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                                <WrapPanel Margin="0,6,0,0">
+                                    <Button Style="{StaticResource AdvCompactButtonStyle}" Content="{Binding Ui.BtnApplyOriginUrl}"
+                                            Command="{Binding ApplyOriginRemoteUrlCommand}"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </GroupBox>
+                    <GroupBox Style="{StaticResource CardGroupStyle}" Header="{Binding AdvHdrStep2Actions}">
+                        <StackPanel>
+                        <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding AutoTxtActionsOnRun}" Margin="0,0,0,8"
+                                   Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource BoolToVis}}"/>
+                        <WrapPanel Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}">
+                            <Button Style="{StaticResource AdvCompactButtonStyle}" Content="{Binding Ui.BtnPull}" Command="{Binding PullCommand}"
+                                    Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                            <Button Style="{StaticResource AdvCompactButtonStyle}" Content="{Binding Ui.BtnDiff}" Command="{Binding DiffCommand}"
+                                    Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                            <Button Style="{StaticResource AdvCompactButtonStyle}" Content="{Binding Ui.BtnAddAll}" Command="{Binding AddAllCommand}"
+                                    Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                            <Button Style="{StaticResource AdvSecondaryButtonStyle}" Content="{Binding Ui.BtnSyncGitHub}" Command="{Binding SyncToGitHubCommand}" MinWidth="220"
+                                    Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                        </WrapPanel>
+                        </StackPanel>
+                    </GroupBox>
+                    <GroupBox Style="{StaticResource CardGroupStyle}" Header="{Binding AdvHdrFilesChanged}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintAdvChangedFiles}" Margin="0,0,0,6"
+                                       Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                            <WrapPanel Margin="0,0,0,8">
+                                <Button Style="{StaticResource AdvCompactButtonStyle}" Content="{Binding Ui.BtnStatus}" Command="{Binding RefreshChangedFilesCommand}"
+                                        Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                                <Button Style="{StaticResource AdvSecondaryButtonStyle}" Content="{Binding Ui.BtnRestoreFile}" Command="{Binding RestoreSelectedFileCommand}" MinWidth="240"
+                                        Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                            </WrapPanel>
+                            <ListBox Style="{StaticResource AppListBoxStyle}" MinHeight="100" MaxHeight="200"
+                                     ItemsSource="{Binding ChangedFiles}" SelectedItem="{Binding SelectedChangedFile}"
+                                     ContextMenu="{StaticResource ChangedFilesContextMenu}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding StatusDisplay}" Width="28" Foreground="{DynamicResource BrushMuted}"/>
+                                            <TextBlock Text="{Binding FilePath}" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </GroupBox>
+                    <GroupBox Style="{StaticResource CardGroupStyle}" Header="{Binding AdvHdrStep4Publish}">
+                        <StackPanel>
+                            <TextBox Style="{StaticResource InputTextBoxSpellStyle}" Text="{Binding CommitMessage, UpdateSourceTrigger=PropertyChanged}"
+                                     AcceptsReturn="True" MinHeight="60" Margin="0,0,0,4"
+                                     ContextMenu="{StaticResource TextEditContextMenu}"/>
+                            <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintAdvCommitMessage}"
+                                       Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                            <WrapPanel>
+                                <Button Style="{StaticResource AdvCompactButtonStyle}" Content="{Binding Ui.BtnCommit}" Command="{Binding CommitCommand}"
+                                        Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                                <Button Style="{StaticResource AdvCompactButtonStyle}" Content="{Binding Ui.BtnPush}" Command="{Binding PushCommand}"
+                                        Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+        <TabItem Header="{Binding AdvTabStaging}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="4">
+                    <TextBlock Style="{StaticResource AutoTabIntroStyle}" Text="{Binding AutoIntroStaging}"
+                               Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource BoolToVis}}"/>
+                    <WrapPanel Style="{StaticResource ToolbarWrapPanelStyle}"
+                              Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}">
+                        <Button Style="{StaticResource AdvPrimaryButtonStyle}" Content="{Binding Ui.BtnCommitSelectedPush}" Command="{Binding CommitSelectedAndPushCommand}"/>
+                        <Button Style="{StaticResource AdvPrimaryButtonStyle}" Content="{Binding Ui.BtnStageSelected}" Command="{Binding StageSelectedFilesCommand}"/>
+                        <Button Style="{StaticResource AdvSecondaryButtonStyle}" Content="{Binding Ui.BtnUnstageSelected}" Command="{Binding UnstageSelectedFilesCommand}"/>
+                        <Button Style="{StaticResource AdvSecondaryButtonStyle}" Content="{Binding Ui.BtnAmendCommit}" Command="{Binding AmendCommitCommand}"/>
+                        <Button Style="{StaticResource AdvCompactButtonStyle}" Content="{Binding Ui.StagingSelectAll}" Command="{Binding StagingSelectAllCommand}"/>
+                        <Button Style="{StaticResource AdvCompactButtonStyle}" Content="{Binding Ui.StagingSelectNone}" Command="{Binding StagingSelectNoneCommand}"/>
+                    </WrapPanel>
+                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.LabelRevertHash}"/>
+                    <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding RevertCommitHash, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4"/>
+                    <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintRevertHash}" Margin="0,0,0,6"
+                               Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                    <Button Style="{StaticResource AdvCompactButtonStyle}" Content="{Binding Ui.BtnStatus}" Command="{Binding RefreshCommitsCommand}" HorizontalAlignment="Left"/>
+                    <ListBox Style="{StaticResource AppListBoxStyle}" MinHeight="80" MaxHeight="120" Margin="0,0,0,8"
+                             ItemsSource="{Binding RecentCommits}" SelectedItem="{Binding SelectedCommit}"
+                             DisplayMemberPath="Display"/>
+                    <Button Style="{StaticResource AdvSecondaryButtonStyle}" Content="{Binding Ui.BtnRevertCommit}" Command="{Binding RevertCommitCommand}" MinWidth="220" HorizontalAlignment="Left"
+                            Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+        <TabItem Header="{Binding AdvTabPushAdv}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="4">
+                    <TextBlock Style="{StaticResource AutoTabIntroStyle}" Text="{Binding AutoIntroPush}"
+                               Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource BoolToVis}}"/>
+                    <Button Style="{StaticResource AdvPrimaryButtonStyle}" Content="{Binding Ui.BtnForcePushLease}" Command="{Binding ForcePushLeaseCommand}" MinWidth="280" HorizontalAlignment="Left"
+                            Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                    <Button Style="{StaticResource AdvSecondaryButtonStyle}" Content="{Binding Ui.BtnForcePush}" Command="{Binding ForcePushCommand}" MinWidth="240" HorizontalAlignment="Left"
+                            Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.LabelDraftBranchName}"/>
+                    <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding DraftBranchName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4"/>
+                    <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintDraftBranchName}"
+                               Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                    <Button Style="{StaticResource AdvPrimaryButtonStyle}" Content="{Binding Ui.BtnDraftBranch}" Command="{Binding DraftBranchPushCommand}" MinWidth="240" HorizontalAlignment="Left"
+                            Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+        <TabItem Header="{Binding AdvTabAutoActions}"
+                 Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource BoolToVis}}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="4">
+                    <GroupBox Style="{StaticResource CardGroupStyle}" Header="{Binding Ui.AutoActionsHeader}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource AutoTabIntroStyle}" Text="{Binding AutoIntroRun}" Margin="0,0,0,8"/>
+                            <TextBlock Foreground="{DynamicResource BrushMuted}" Margin="0,0,0,10"
+                                       Text="{Binding Ui.AutoActionsHint}" TextWrapping="Wrap"/>
+                            <CheckBox Content="{Binding Ui.AutoRunCreateGithubRepo}" IsChecked="{Binding AutoRunCreateGithubRepo}" Margin="0,0,0,2"/>
+                            <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintAutoRunCreateGithubRepo}" Margin="22,0,0,8"
+                                       Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                            <CheckBox Content="{Binding Ui.AutoRunPull}" IsChecked="{Binding AutoRunPull}" Margin="0,0,0,2"/>
+                            <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintAutoRunPull}" Margin="22,0,0,6"
+                                       Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                            <CheckBox Content="{Binding Ui.AutoUseSelectedFiles}" IsChecked="{Binding AutoUseSelectedFiles}" Margin="0,0,0,2"/>
+                            <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintAutoUseSelectedFiles}" Margin="22,0,0,6"
+                                       Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                            <CheckBox Content="{Binding Ui.AutoRunCommit}" IsChecked="{Binding AutoRunCommit}" Margin="0,0,0,2"/>
+                            <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintAutoRunCommit}" Margin="22,0,0,6"
+                                       Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                            <CheckBox Content="{Binding Ui.AutoRunPush}" IsChecked="{Binding AutoRunPush}" Margin="0,0,0,2"/>
+                            <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintAutoRunPush}" Margin="22,0,0,6"
+                                       Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                            <CheckBox Content="{Binding Ui.AutoRunCreateRelease}" IsChecked="{Binding AutoRunCreateRelease}" Margin="0,0,0,2"/>
+                            <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintAutoRunCreateRelease}" Margin="22,0,0,10"
+                                       Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                            <WrapPanel Style="{StaticResource ToolbarWrapPanelStyle}">
+                                <Button Style="{StaticResource AdvPrimaryButtonStyle}" Content="{Binding Ui.AutoRunAll}" Command="{Binding RunAutoActionsCommand}"/>
+                                <Button Style="{StaticResource AdvSecondaryButtonStyle}" Content="{Binding Ui.AutoCheckPlan}" Command="{Binding RefreshAutoPreviewCommand}"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </GroupBox>
+                    <GroupBox Style="{StaticResource CardGroupStyle}" Header="{Binding Ui.AutoPreviewHeader}">
+                        <Border Style="{StaticResource LogPanelChromeStyle}">
+                            <TextBox Style="{StaticResource LogTextBoxStyle}" IsReadOnly="True"
+                                     MinHeight="180"
+                                     Text="{Binding AutoActionPreview, Mode=OneWay}"
+                                     VerticalScrollBarVisibility="Auto"
+                                     TextWrapping="Wrap"
+                                     ContextMenu="{StaticResource LogContextMenu}"/>
+                        </Border>
+                    </GroupBox>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+        <TabItem Header="{Binding AdvTabReleases}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <GroupBox Style="{StaticResource CardGroupStyle}" Header="{Binding Ui.ReleasesHeader}" Margin="4">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AutoTabIntroStyle}" Text="{Binding AutoIntroReleases}"
+                                   Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource BoolToVis}}"/>
+                        <TextBlock Text="{Binding Ui.ReleasesHint}" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource BrushMuted}" FontSize="11.5" Margin="0,0,0,14" LineHeight="18"/>
+                        <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.ReleaseTag}"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,4"
+                                 Text="{Binding ReleaseTag, UpdateSourceTrigger=PropertyChanged}"
+                                 ContextMenu="{StaticResource TextEditContextMenu}"/>
+                        <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintReleaseTag}"
+                                   Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                        <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.ReleaseTitle}"/>
+                        <TextBox Style="{StaticResource InputTextBoxSpellStyle}" Margin="0,0,0,4"
+                                 Text="{Binding ReleaseTitle, UpdateSourceTrigger=PropertyChanged}"
+                                 ContextMenu="{StaticResource TextEditContextMenu}"/>
+                        <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintReleaseTitle}"
+                                   Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                        <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.ReleaseNotes}"/>
+                        <TextBox Style="{StaticResource InputTextBoxSpellStyle}" Margin="0,0,0,4"
+                                 Text="{Binding ReleaseNotes, UpdateSourceTrigger=PropertyChanged}"
+                                 AcceptsReturn="True" MinHeight="96" MaxHeight="180"
+                                 TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                                 ContextMenu="{StaticResource TextEditContextMenu}"/>
+                        <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintReleaseNotes}"
+                                   Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                        <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.ReleaseTarget}"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,4"
+                                 Text="{Binding ReleaseTargetBranch, UpdateSourceTrigger=PropertyChanged}"
+                                 ContextMenu="{StaticResource TextEditContextMenu}"/>
+                        <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintReleaseTarget}"
+                                   Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                        <CheckBox Content="{Binding Ui.ReleaseLatest}" Margin="0,0,0,2"
+                                  IsChecked="{Binding ReleaseLatest}"/>
+                        <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintReleaseLatest}" Margin="20,0,0,6"
+                                   Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                        <CheckBox Content="{Binding Ui.ReleasePrerelease}" Margin="0,0,0,2"
+                                  IsChecked="{Binding ReleasePrerelease}"/>
+                        <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintReleasePrerelease}" Margin="20,0,0,8"
+                                   Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                        <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.ReleaseAssets}" Margin="0,8,0,4"/>
+                        <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintReleaseAssets}" Margin="0,0,0,6"
+                                   Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                        <TextBlock Text="{Binding Ui.ReleaseAssetsHint}" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource BrushMuted}" FontSize="11" Margin="0,0,0,6"
+                                   Visibility="{Binding ShowFieldHints, Converter={StaticResource InverseBoolToVis}}"/>
+                        <ListBox x:Name="ReleaseAssetsList"
+                                 Style="{StaticResource AppListBoxStyle}"
+                                 MinHeight="72" MaxHeight="140" Margin="0,0,0,8"
+                                 ItemsSource="{Binding ReleaseAssets}"
+                                 SelectedItem="{Binding SelectedReleaseAsset}"
+                                 ToolTip="{Binding Ui.TipReleaseAssetsList}"
+                                 ContextMenu="{StaticResource ReleaseAssetsContextMenu}"
+                                 PreviewMouseRightButtonDown="OnListBoxPreviewMouseRightButtonDown"/>
+                        <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.TipReleaseAssetsContextMenu}" Margin="0,0,0,8"
+                                   Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                        <WrapPanel Style="{StaticResource ToolbarWrapPanelStyle}" Margin="0,0,0,12">
+                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                    Content="{Binding Ui.BtnReleaseAddFiles}" Command="{Binding AddReleaseAssetsCommand}"
+                                    ToolTip="{Binding Ui.TipReleaseAddFiles}"/>
+                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                    Content="{Binding Ui.BtnReleaseAddImages}" Command="{Binding AddReleaseImagesCommand}"
+                                    ToolTip="{Binding Ui.TipReleaseAddImages}"/>
+                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                    Content="{Binding Ui.BtnReleaseAddBuild}" Command="{Binding AddReleaseBuildOutputCommand}"
+                                    ToolTip="{Binding Ui.TipReleaseAddBuild}"/>
+                        </WrapPanel>
+                        <WrapPanel Style="{StaticResource ToolbarWrapPanelStyle}">
+                            <Button Style="{StaticResource PrimaryButtonStyle}"
+                                    Content="{Binding Ui.BtnCreateRelease}" Command="{Binding CreateReleaseCommand}"
+                                    ToolTip="{Binding Ui.TipCreateRelease}"
+                                    Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                    Content="{Binding Ui.BtnOpenReleases}" Command="{Binding OpenReleasesCommand}"
+                                    ToolTip="{Binding Ui.TipOpenReleases}"
+                                    Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </GroupBox>
+            </ScrollViewer>
+        </TabItem>
+        <TabItem Header="{Binding AdvTabBranchesAdv}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="4">
+                    <TextBlock Style="{StaticResource AutoTabIntroStyle}" Text="{Binding AutoIntroBranches}"
+                               Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource BoolToVis}}"/>
+                    <WrapPanel Margin="0,0,0,10">
+                        <Button Style="{StaticResource AdvCompactButtonStyle}" Content="{Binding Ui.BtnStatus}" Command="{Binding RefreshStatusCommand}"
+                                Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                        <Button Style="{StaticResource AdvSecondaryButtonStyle}" Content="{Binding Ui.BtnPruneRemote}" Command="{Binding RefreshRemoteBranchesCommand}" MinWidth="230"
+                                Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                    </WrapPanel>
+                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.LabelMergeSource}"/>
+                    <ComboBox Style="{StaticResource InputComboBoxStyle}" ItemsSource="{Binding BranchesForPicker}" Text="{Binding MergeSourceBranch, UpdateSourceTrigger=PropertyChanged}" IsEditable="True" Margin="0,0,0,4"/>
+                    <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintMergeSource}"
+                               Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                    <WrapPanel Margin="0,0,0,12">
+                        <Button Style="{StaticResource AdvPrimaryButtonStyle}" Content="{Binding Ui.BtnMergeBranch}" Command="{Binding MergeBranchCommand}" MinWidth="250"
+                                Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                        <Button Style="{StaticResource AdvSecondaryButtonStyle}" Content="{Binding Ui.BtnRebaseBranch}" Command="{Binding RebaseBranchCommand}" MinWidth="250"
+                                Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                    </WrapPanel>
+                    <WrapPanel Margin="0,0,0,12">
+                        <Button Style="{StaticResource AdvPrimaryButtonStyle}" Content="{Binding Ui.BtnResolveConflicts}" Command="{Binding ResolveConflictsCommand}" MinWidth="230"
+                                Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                        <Button Style="{StaticResource AdvSecondaryButtonStyle}" Content="{Binding Ui.BtnMergeContinue}" Command="{Binding MergeContinueCommand}" MinWidth="260"
+                                Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                        <Button Style="{StaticResource AdvSecondaryButtonStyle}" Content="{Binding Ui.BtnMergeAbort}" Command="{Binding MergeAbortCommand}" MinWidth="240"
+                                Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                    </WrapPanel>
+                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.BtnResolveConflicts}"/>
+                    <ListBox Style="{StaticResource AppListBoxStyle}" MinHeight="64" MaxHeight="120" Margin="0,0,0,12"
+                             ItemsSource="{Binding ConflictFiles}" SelectedItem="{Binding SelectedConflictFile}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding StatusCode}" Width="32" Foreground="{DynamicResource BrushMuted}"/>
+                                    <TextBlock Text="{Binding FilePath}" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.BtnDeleteLocalBranch}"/>
+                    <ComboBox Style="{StaticResource InputComboBoxStyle}" ItemsSource="{Binding BranchesForPicker}" SelectedItem="{Binding SelectedLocalBranchForDelete}" Margin="0,0,0,6"/>
+                    <Button Style="{StaticResource AdvSecondaryButtonStyle}" Content="{Binding Ui.BtnDeleteLocalBranch}" Command="{Binding DeleteLocalBranchCommand}" MinWidth="260" HorizontalAlignment="Left"
+                            Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                    <Button Style="{StaticResource AdvSecondaryButtonStyle}" Content="{Binding Ui.BtnPruneRemote}" Command="{Binding PruneRemoteCommand}" MinWidth="230" HorizontalAlignment="Left"
+                            Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                    <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.BtnDeleteRemoteBranch}"/>
+                    <ComboBox Style="{StaticResource InputComboBoxStyle}" ItemsSource="{Binding RemoteBranchesForPicker}" SelectedItem="{Binding SelectedRemoteBranchForDelete}" Margin="0,0,0,6"/>
+                    <Button Style="{StaticResource AdvSecondaryButtonStyle}" Content="{Binding Ui.BtnDeleteRemoteBranch}" Command="{Binding DeleteRemoteBranchCommand}" MinWidth="260" HorizontalAlignment="Left"
+                            Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+        <TabItem Header="{Binding AdvTabFiles}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="4">
+                    <TextBlock Style="{StaticResource AutoTabIntroStyle}" Text="{Binding AutoIntroFiles}"
+                               Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource BoolToVis}}"/>
+                    <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintAdvFilesSelection}" Margin="0,0,0,6"
+                               Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                    <WrapPanel Margin="0,0,0,8">
+                        <Button Style="{StaticResource AdvCompactButtonStyle}" Content="{Binding Ui.StagingSelectAll}" Command="{Binding StagingSelectAllCommand}"/>
+                        <Button Style="{StaticResource AdvCompactButtonStyle}" Content="{Binding Ui.StagingSelectNone}" Command="{Binding StagingSelectNoneCommand}"/>
+                        <Button Style="{StaticResource AdvCompactButtonStyle}" Content="{Binding Ui.BtnStatus}" Command="{Binding RefreshChangedFilesCommand}"/>
+                        <Button Style="{StaticResource AdvSecondaryButtonStyle}" Content="{Binding Ui.BtnRestoreFile}" Command="{Binding RestoreSelectedFileCommand}" MinWidth="240"
+                                Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}"/>
+                    </WrapPanel>
+                    <ListBox Style="{StaticResource AppListBoxStyle}" MinHeight="120" MaxHeight="280" ItemsSource="{Binding ChangedFiles}" SelectedItem="{Binding SelectedChangedFile}" Margin="0,0,0,4"
+                             ContextMenu="{StaticResource ChangedFilesContextMenu}"
+                             PreviewMouseRightButtonDown="OnListBoxPreviewMouseRightButtonDown">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding StatusDisplay}" Width="28" Foreground="{DynamicResource BrushMuted}"/>
+                                    <TextBlock Text="{Binding FilePath}" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.TipChangedFilesContextMenu}"
+                               Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+        <TabItem Header="{Binding AdvTabIdentity}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <GroupBox Style="{StaticResource CardGroupStyle}" Header="{Binding Ui.IdentityHeader}" Margin="4">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource AutoTabIntroStyle}" Text="{Binding AutoIntroIdentity}"
+                                   Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource BoolToVis}}"/>
+                        <TextBlock Text="{Binding Ui.IdentityGlobalHint}" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource BrushMuted}" FontSize="11.5" Margin="0,0,0,14" LineHeight="18"/>
+                        <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.IdentityUserName}"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,4"
+                                 Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintIdentityName}"
+                                   Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                        <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.IdentityUserEmail}"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,4"
+                                 Text="{Binding UserEmail, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.HintIdentityEmail}"
+                                   Visibility="{Binding ShowFieldHints, Converter={StaticResource BoolToVis}}"/>
+                        <WrapPanel Margin="0,0,0,8">
+                            <Button Style="{StaticResource PrimaryButtonStyle}"
+                                    Content="{Binding Ui.BtnApplyConfig}" Command="{Binding ApplyGitConfigCommand}"
+                                    ToolTip="{Binding Ui.TipApplyConfig}" MinWidth="110"/>
+                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                    Content="{Binding Ui.BtnLoadConfig}" Command="{Binding LoadGitConfigCommand}"
+                                    ToolTip="{Binding Ui.TipLoadConfig}" MinWidth="110"/>
+                        </WrapPanel>
+                        <Button Style="{StaticResource SecondaryButtonStyle}"
+                                Content="{Binding Ui.BtnClearIdentity}" Command="{Binding ClearIdentityCommand}"
+                                ToolTip="{Binding Ui.TipClearIdentity}" MinWidth="200"
+                                HorizontalAlignment="Left"/>
+                    </StackPanel>
+                </GroupBox>
+            </ScrollViewer>
+        </TabItem>
+        <TabItem Header="{Binding AdvTabSafety}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="4">
+                    <TextBlock Style="{StaticResource AutoTabIntroStyle}" Text="{Binding AutoIntroSafety}"
+                               Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource BoolToVis}}"/>
+                    <Border Style="{StaticResource LogPanelChromeStyle}">
+                        <ListBox Style="{StaticResource SafetyLogListStyle}" MinHeight="200" ItemsSource="{Binding SafetyLog}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource BrushLogFg}" Text="{Binding Summary}"/>
+                                        <TextBlock FontSize="11" Foreground="{DynamicResource BrushMuted}" Text="{Binding Timestamp}"/>
+                                        <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource BrushLogFg}" Text="{Binding Details}" FontSize="11"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+        <TabItem Header="{Binding AdvTabLog}">
+            <Border Style="{StaticResource LogPanelChromeStyle}" Margin="4">
+                <TextBox Style="{StaticResource LogTextBoxStyle}" Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                         ContextMenu="{StaticResource LogContextMenu}"/>
+            </Border>
+        </TabItem>
+        <TabItem Header="{Binding AdvTabSettings}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <Border Style="{StaticResource SettingsPanelStyle}" Margin="4">
+                    <StackPanel>
+                        <TextBlock FontWeight="SemiBold" FontSize="14"
+                                   Foreground="{DynamicResource BrushHeader}"
+                                   Text="{Binding Ui.SettingsHeader}" Margin="0,0,0,12"/>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" MinWidth="100"/>
+                                <ColumnDefinition Width="*" MaxWidth="300"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,10"
+                                       Foreground="{DynamicResource BrushMuted}" Text="{Binding Ui.SettingsLanguage}"/>
+                            <ComboBox Grid.Row="0" Grid.Column="1" Style="{StaticResource InputComboBoxStyle}"
+                                      IsEditable="False" Margin="0,0,0,10"
+                                      ItemsSource="{Binding Languages}"
+                                      SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource BrushText}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,10"
+                                       Foreground="{DynamicResource BrushMuted}" Text="{Binding Ui.SettingsTheme}"/>
+                            <ComboBox Grid.Row="1" Grid.Column="1" Style="{StaticResource InputComboBoxStyle}"
+                                      IsEditable="False" Margin="0,0,0,10"
+                                      ItemsSource="{Binding Themes}"
+                                      SelectedItem="{Binding SelectedTheme, Mode=TwoWay}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource BrushText}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,10"
+                                       Foreground="{DynamicResource BrushMuted}" Text="{Binding Ui.SettingsBackgroundColor}"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1" Style="{StaticResource InputComboBoxStyle}"
+                                      IsEditable="False" Margin="0,0,0,10"
+                                      ItemsSource="{Binding BackgroundColors}"
+                                      SelectedItem="{Binding SelectedBackground, Mode=TwoWay}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource BrushText}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0"
+                                       Foreground="{DynamicResource BrushMuted}" Text="{Binding Ui.SettingsAccentColor}"/>
+                            <ComboBox Grid.Row="3" Grid.Column="1" Style="{StaticResource InputComboBoxStyle}"
+                                      IsEditable="False"
+                                      ItemsSource="{Binding AccentColors}"
+                                      SelectedItem="{Binding SelectedAccent, Mode=TwoWay}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource BrushText}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Grid>
+                        <CheckBox Content="{Binding Ui.SettingsConfirmCommit}" IsChecked="{Binding ConfirmCommit}" Margin="0,0,0,8"/>
+                        <CheckBox Content="{Binding Ui.SettingsShowFieldHints}" IsChecked="{Binding ShowFieldHints}" Margin="0,0,0,8"/>
+                        <CheckBox Content="{Binding Ui.SettingsAutoRefresh}" Margin="0,0,0,8"
+                                  IsChecked="{Binding AutoRefreshOnSaveRepo}"/>
+                        <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{Binding Ui.SettingsDefaultUiMode}" Margin="0,0,0,6"/>
+                        <TextBlock Style="{StaticResource FieldHintStyle}" Text="{Binding Ui.SettingsDefaultUiModeHint}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                        <RadioButton GroupName="DefaultUiModeAdv" Content="{Binding Ui.UiModeEasy}" IsChecked="{Binding DefaultUiModeIsEasy, Mode=TwoWay}" Margin="0,0,0,4"/>
+                        <RadioButton GroupName="DefaultUiModeAdv" Content="{Binding Ui.UiModeAdvanced}" IsChecked="{Binding DefaultUiModeIsAdvanced, Mode=TwoWay}" Margin="0,0,0,4"/>
+                        <RadioButton GroupName="DefaultUiModeAdv" Content="{Binding Ui.UiModeAutoAdvanced}" IsChecked="{Binding DefaultUiModeIsAutoAdvanced, Mode=TwoWay}" Margin="0,0,0,12"/>
+                        <TextBlock Foreground="{DynamicResource BrushMuted}" FontSize="11" TextWrapping="Wrap"
+                                   Text="{Binding Ui.SettingsAutoSaveHint}" Margin="0,0,0,12"/>
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="{Binding Ui.BtnClearLog}" Command="{Binding ClearLogCommand}" MinWidth="120" HorizontalAlignment="Left"/>
+                    </StackPanel>
+                </Border>
+            </ScrollViewer>
+        </TabItem>
+        <TabItem Header="{Binding AdvTabHelp}"
+                 Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource BoolToVis}}">
+            <TabControl Style="{StaticResource HelpMiniTabControlStyle}" Margin="4">
+                <TabItem Header="{Binding Ui.TabModeHelp}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailAutoAdvanced}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding AdvTabWorkflow}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailAutoProject}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding AdvTabStaging}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailAutoStaging}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding AdvTabPushAdv}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailAutoPush}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding AdvTabAutoActions}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailAutoRun}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding AdvTabReleases}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailAutoReleases}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding AdvTabBranchesAdv}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailAutoBranches}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding AdvTabFiles}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailAutoFiles}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding AdvTabIdentity}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailAutoIdentity}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding AdvTabSafety}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailAutoSafety}"/>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
+        </TabItem>
+        <TabItem Header="{Binding AdvTabHelp}"
+                 Visibility="{Binding IsAutoAdvancedMode, Converter={StaticResource InverseBoolToVis}}">
+            <TabControl Style="{StaticResource HelpMiniTabControlStyle}" Margin="4">
+                <TabItem Header="{Binding Ui.TabModeHelp}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailMode}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding Ui.TabWorkflow}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailWorkflow}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding Ui.TabStaging}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailStaging}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding Ui.TabPushAdv}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailPush}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding Ui.TabReleases}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailReleases}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding Ui.TabBranchesAdv}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailBranches}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding Ui.TabFiles}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailFiles}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding Ui.TabIdentity}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailIdentity}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding Ui.TabSafety}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailSafety}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding Ui.TabLog}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailLog}"/>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="{Binding Ui.TabSettings}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBlock Style="{StaticResource HelpDetailTextStyle}" Text="{Binding Ui.AdvHelpDetailSettings}"/>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
+        </TabItem>
+    </TabControl>
+</UserControl>

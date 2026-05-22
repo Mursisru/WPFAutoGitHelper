@@ -1,7 +1,7 @@
 using System;
+using System.IO;
 using System.Windows;
 using System.Windows.Threading;
-using WpfAutoGitHelper.Localization;
 using WpfAutoGitHelper.Services;
 using WpfAutoGitHelper.Views;
 
@@ -52,9 +52,25 @@ namespace WpfAutoGitHelper
                 var window = new FatalErrorWindow(ex.ToString());
                 window.ShowDialog();
             }
-            catch
+            catch (Exception uiEx)
             {
-                // Last resort if themed window cannot load.
+                try
+                {
+                    var logPath = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+                        "WpfAutoGitHelper_fatal.log");
+                    File.WriteAllText(logPath, ex + "\n\n--- UI failed ---\n" + uiEx);
+                }
+                catch
+                {
+                    // ignored
+                }
+
+                System.Windows.Forms.MessageBox.Show(
+                    ex.ToString(),
+                    "WPF Auto Git Helper",
+                    System.Windows.Forms.MessageBoxButtons.OK,
+                    System.Windows.Forms.MessageBoxIcon.Error);
             }
         }
     }

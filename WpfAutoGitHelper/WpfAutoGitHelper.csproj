@@ -31,6 +31,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xaml" />
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
@@ -59,6 +60,14 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Views\ConflictResolutionWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\AdvancedModeView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Themes\InputControls.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -79,6 +88,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Themes\AppContextMenus.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>
@@ -88,6 +101,39 @@
     <Compile Include="Views\FatalErrorWindow.xaml.cs">
       <DependentUpon>FatalErrorWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\ConflictResolutionWindow.xaml.cs">
+      <DependentUpon>ConflictResolutionWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\AdvancedModeView.xaml.cs">
+      <DependentUpon>AdvancedModeView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Helpers\ListBoxContextMenuHelper.cs" />
+    <Compile Include="Converters\InverseBoolToVisibilityConverter.cs" />
+    <Compile Include="Converters\InverseBoolConverter.cs" />
+    <Compile Include="Models\UiModeKind.cs" />
+    <Compile Include="Models\DangerousOperationType.cs" />
+    <Compile Include="Models\DangerousOperationRecord.cs" />
+    <Compile Include="Models\CommitLogEntry.cs" />
+    <Compile Include="Models\ConflictFileEntry.cs" />
+    <Compile Include="Services\GitOperationsService.cs" />
+    <Compile Include="Services\DangerousOperationGuard.cs" />
+    <Compile Include="Services\ConflictMarkerParser.cs" />
+    <Compile Include="ViewModels\MainViewModel.Mode.cs" />
+    <Compile Include="ViewModels\MainViewModel.Advanced.cs" />
+    <Compile Include="ViewModels\MainViewModel.AdvancedStaging.cs" />
+    <Compile Include="ViewModels\MainViewModel.AdvancedPush.cs" />
+    <Compile Include="ViewModels\MainViewModel.AdvancedBranches.cs" />
+    <Compile Include="ViewModels\MainViewModel.AdvancedFiles.cs" />
+    <Compile Include="ViewModels\MainViewModel.AutoAdvanced.cs" />
+    <Compile Include="ViewModels\MainViewModel.AutoAdvancedUi.cs" />
+    <Compile Include="ViewModels\MainViewModel.OriginRemote.cs" />
+    <Compile Include="ViewModels\MainViewModel.BranchPickers.cs" />
+    <Compile Include="ViewModels\MainViewModel.GitRepoState.cs" />
+    <Compile Include="ViewModels\MainViewModel.BusyScope.cs" />
+    <Compile Include="ViewModels\MainViewModel.DraftBranch.cs" />
+    <Compile Include="ViewModels\MainViewModel.BranchResolve.cs" />
+    <Compile Include="ViewModels\MainViewModel.AutoConflictResolve.cs" />
+    <Compile Include="ViewModels\MainViewModel.Release.cs" />
     <Compile Include="Localization\Loc.cs" />
     <Compile Include="Localization\LocResources.cs" />
     <Compile Include="Localization\LocResourcesMore.cs" />

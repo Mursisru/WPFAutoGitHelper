@@ -38,8 +38,16 @@
     <SolidColorBrush x:Key="BrushInputFg" Color="{StaticResource ColorInputFg}"/>
     <SolidColorBrush x:Key="BrushSecondaryBtn" Color="{StaticResource ColorSecondaryBtn}"/>
     <SolidColorBrush x:Key="BrushSecondaryBtnHover" Color="{StaticResource ColorSecondaryBtnHover}"/>
-    <SolidColorBrush x:Key="BrushLogBg" Color="#020617"/>
-    <SolidColorBrush x:Key="BrushLogFg" Color="#CBD5E1"/>
+    <SolidColorBrush x:Key="BrushSegmentHost" Color="{StaticResource ColorTabInactive}"/>
+    <SolidColorBrush x:Key="BrushSegmentSelectedFg" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="BrushMenuBg" Color="{StaticResource ColorCardBg}"/>
+    <SolidColorBrush x:Key="BrushMenuBorder" Color="{StaticResource ColorAccent}"/>
+    <SolidColorBrush x:Key="BrushMenuHover" Color="{StaticResource ColorTabHover}"/>
+    <Color x:Key="ColorLogBg">#020617</Color>
+    <Color x:Key="ColorLogFg">#CBD5E1</Color>
+    <SolidColorBrush x:Key="BrushLogBg" Color="{StaticResource ColorLogBg}"/>
+    <SolidColorBrush x:Key="BrushLogFg" Color="{StaticResource ColorLogFg}"/>
+    <SolidColorBrush x:Key="BrushLogBorder" Color="{StaticResource ColorAccent}"/>
     <SolidColorBrush x:Key="BrushHelpPanelBg" Color="{StaticResource ColorHelpPanelBg}"/>
     <SolidColorBrush x:Key="BrushHelpPanelBorder" Color="{StaticResource ColorHelpPanelBorder}"/>
     <SolidColorBrush x:Key="BrushScrollTrack" Color="#1E293B"/>
@@ -49,6 +57,7 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="ThemeChrome.xaml"/>
         <ResourceDictionary Source="InputControls.xaml"/>
+        <ResourceDictionary Source="AppContextMenus.xaml"/>
     </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

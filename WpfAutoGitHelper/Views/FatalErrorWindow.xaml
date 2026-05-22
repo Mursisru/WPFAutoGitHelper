@@ -1,7 +1,7 @@
 <Window x:Class="WpfAutoGitHelper.Views.FatalErrorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Style="{StaticResource AppWindowStyle}"
+        Style="{StaticResource AppDialogWindowStyle}"
         Title="WPF Auto Git Helper"
         Width="680" Height="420"
         MinWidth="480" MinHeight="280"
@@ -14,9 +14,11 @@
         </Grid.RowDefinitions>
         <TextBlock Grid.Row="0" Style="{StaticResource HeaderTitleStyle}"
                    Text="{Binding TitleText}" Margin="0,0,0,10"/>
-        <TextBox Grid.Row="1" Style="{StaticResource LogTextBoxStyle}"
-                 Text="{Binding ErrorText, Mode=OneWay}" IsReadOnly="True"
-                 TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+        <Border Grid.Row="1" Style="{StaticResource LogPanelChromeStyle}">
+            <TextBox Style="{StaticResource LogTextBoxStyle}"
+                     Text="{Binding ErrorText, Mode=OneWay}" IsReadOnly="True"
+                     TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+        </Border>
         <Button Grid.Row="2" Style="{StaticResource PrimaryButtonStyle}"
                 Content="{Binding OkText}" IsDefault="True" MinWidth="96"
                 HorizontalAlignment="Right" Margin="0,12,0,0" Click="Ok_Click"/>

@@ -2,6 +2,8 @@
 
 Small **Windows WPF** app: run common **Git** actions with buttons for **any** local repository — no terminal required.
 
+**Current version: 1.5.0**
+
 ## Requirements
 
 - Windows 10/11  
@@ -25,25 +27,43 @@ Portable data (created on first save): `WpfAutoGitHelper\bin\Release\Data\settin
 ## First run
 
 1. Launch `WpfAutoGitHelper.exe`.  
-2. On the **Actions** tab, set the folder that contains a `.git` directory (clone root) and click **Save**.  
-3. On the **Identity** tab, set **user.name** / **user.email** (Load / Apply) — global only.  
-4. On first **Push**, Git Credential Manager may prompt you; use a **personal access token** for HTTPS instead of your GitHub password.
+2. Choose **EZ**, **Advanced**, or **Auto Advanced** in the header (or press **F7** to cycle).  
+3. Set the repository folder (clone root) and click **Save**.  
+4. On the **Identity** tab, set **user.name** / **user.email** (Load / Apply) — global only.  
+5. On first **Push**, Git Credential Manager may prompt you; use a **personal access token** for HTTPS instead of your GitHub password.
 
 ## Features
 
-- **Workflow:** Pull, Status, Diff, Add all, Commit, Push; branches (create / checkout / push); **Clear** workflow fields.  
-- **Create on GitHub…** — new repo on GitHub via `gh` (name, description, visibility, `.gitignore`, license, README, local clone + push).  
-- **Release publishing** — `gh release create` with tag, title, notes, target branch, latest / pre-release.  
-- **Explorer** and **GitHub** (when `origin` is GitHub).  
-- **15 languages**, **light/dark** theme, auto-saved settings.  
-- Auto-generated commit messages are always **English** (`Initial commit`, `Add project files`).  
-- Migrates settings from `%AppData%\WpfAutoGitHelper` or legacy `%AppData%\GlocGitHelper\` into `Data\` beside the exe on first launch.
+### EZ mode
+- Workflow: Pull, Status, Diff, Add all, Commit, Push; branches; **Clear** workflow fields.  
+- **Create on GitHub…** — new repo via `gh` (visibility, `.gitignore`, license, README, clone + push).  
+- **Release publishing** — `gh release create` (tag, title, notes, assets, latest / pre-release).  
+- **Explorer** and **GitHub** when `origin` points to GitHub.
+
+### Advanced mode
+- Selective stage/commit/push, amend, revert, draft branch push, force-with-lease.  
+- Merge/rebase, conflict list + resolution UI, local/remote branch delete.  
+- Changed-files list with checkboxes; safety log for confirmed dangerous ops.  
+- In-app help tabs per section.
+
+### Auto Advanced mode
+- Same tabs visible with Auto-oriented labels; **Run** tab for one-click scenario.  
+- Options: pull, selected files only, commit, push, optional GitHub repo/release.  
+- Origin URL on Project tab; preview before run.
+
+### UI and settings
+- **15 languages**; **Light / Dark / Black** themes; **accent** and **background** presets.  
+- **Default UI mode** and **field hints** in Settings.  
+- **Context menus** on repo path, file lists, text fields, log, release assets.  
+- In-app dialogs (no system MessageBox for normal flows).  
+- Auto-generated commit messages are always **English**.  
+- Settings in `Data\settings.json` next to the exe (migrates from legacy AppData paths).
 
 Passwords and PATs are **not** stored in this app.
 
 ## Settings
 
-`Data\settings.json` next to `WpfAutoGitHelper.exe` — `Language`, `Theme`, `ConfirmCommit`, `AutoRefreshOnSaveRepo`, recent repo paths, release fields, last commit message.
+`Data\settings.json` next to `WpfAutoGitHelper.exe` — language, theme, accent, background, UI mode, confirm commit, field hints, recent repos, release fields, origin URL cache, and more.
 
 ## License
 

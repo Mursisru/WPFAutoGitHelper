@@ -116,20 +116,25 @@ namespace WpfAutoGitHelper.Services
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
 
+                var cancelled = false;
                 await Task.Run(() =>
                 {
                     while (!process.HasExited)
                     {
                         if (cancellationToken.IsCancellationRequested)
                         {
-                            try { process.Kill(); } catch { /* ignore */ }
+                            cancelled = true;
+                            try { if (!process.HasExited) process.Kill(); } catch { /* ignore */ }
+                            if (!process.WaitForExit(5000))
+                                try { process.Kill(); } catch { /* ignore */ }
                             break;
                         }
                         Thread.Sleep(50);
                     }
                 }, cancellationToken).ConfigureAwait(false);
 
-                process.WaitForExit(5000);
+                if (!process.HasExited)
+                    process.WaitForExit(cancelled ? 3000 : 5000);
 
                 return new GitRunResult
                 {
@@ -195,6 +200,20 @@ namespace WpfAutoGitHelper.Services
             }
 
             return remoteUrl;
+        }
+
+        public static string ToGitRemoteUrl(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return url;
+
+            url = url.Trim().TrimEnd('/');
+            if (url.StartsWith("git@", StringComparison.OrdinalIgnoreCase))
+                return url;
+
+            if (!url.EndsWith(".git", StringComparison.OrdinalIgnoreCase))
+                url += ".git";
+            return url;
         }
 
         private static string BuildArgumentString(string[] arguments)

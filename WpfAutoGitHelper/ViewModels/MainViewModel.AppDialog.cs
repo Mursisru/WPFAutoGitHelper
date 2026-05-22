@@ -9,7 +9,7 @@ namespace WpfAutoGitHelper.ViewModels
 {
     public sealed partial class MainViewModel
     {
-        public const int LogTabIndex = 3;
+        public const int LogTabIndex = EasyLogTabIndex;
 
         private TaskCompletionSource<bool> _dialogTcs;
         private bool _isDialogOpen;
@@ -141,7 +141,10 @@ namespace WpfAutoGitHelper.ViewModels
         private async Task NotifyAsync(string message, string title = null, bool isError = false)
         {
             AppendLog(message, isError);
-            SelectedTabIndex = LogTabIndex;
+            if (IsAnyAdvancedMode)
+                AdvancedTabIndex = AdvancedLogTabIndex;
+            else
+                SelectedTabIndex = EasyLogTabIndex;
             await ShowAppDialogAsync(message, title ?? Caption, AppDialogMode.Ok).ConfigureAwait(true);
         }
 

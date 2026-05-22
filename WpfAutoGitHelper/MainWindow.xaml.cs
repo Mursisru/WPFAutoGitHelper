@@ -1,7 +1,9 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Threading;
+using WpfAutoGitHelper.Helpers;
 using WpfAutoGitHelper.ViewModels;
 using WpfAutoGitHelper.Views;
 
@@ -21,6 +23,7 @@ namespace WpfAutoGitHelper
                 _viewModel.LanguageChanged += OnViewModelLanguageChanged;
 
                 RefreshTabHeaders();
+                Loaded += OnMainWindowLoaded;
             }
             catch (Exception ex)
             {
@@ -30,9 +33,31 @@ namespace WpfAutoGitHelper
             }
         }
 
+        private void OnMainWindowLoaded(object sender, RoutedEventArgs e)
+        {
+            _viewModel?.RaiseCommandsCanExecuteChanged();
+        }
+
         private void OnViewModelLanguageChanged()
         {
             Dispatcher.BeginInvoke((Action)RefreshTabHeaders, DispatcherPriority.DataBind);
+        }
+
+
+        private void OnListBoxPreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is ListBox listBox)
+                ListBoxContextMenuHelper.SelectItemUnderMouse(listBox, e);
+        }
+
+        private void OnWindowKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.F7 || _viewModel == null)
+                return;
+
+            if (_viewModel.ToggleUiModeCommand?.CanExecute(null) == true)
+                _viewModel.ToggleUiModeCommand.Execute(null);
+            e.Handled = true;
         }
 
         private void RefreshTabHeaders()

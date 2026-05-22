@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.5.0 — 2026-05-22
+
+### Added
+- **Three UI modes:** EZ, Advanced, and Auto Advanced (header switch + **F7**).
+- **Advanced mode:** staging, push options (draft branch, force-with-lease), branch merge/rebase, file manager, safety log, in-app help tabs.
+- **Auto Advanced:** configurable run plan (pull, selected files, commit, push, optional GitHub repo/release), preview panel, origin URL on Project tab.
+- **Context menus** (right-click): repo path, changed files, text fields, log, release assets.
+- **Default UI mode** in Settings (startup mode independent from header toggle).
+- **Field hints** toggle in Settings.
+- **Conflict resolution** window for manual Advanced workflow.
+- **Dangerous operation guard** with safety journal.
+- Custom **CheckBox** / **RadioButton** chrome; **Black** theme plus accent and background presets.
+
+### Changed
+- Advanced tab order and labels (no numeric prefixes); dedicated Auto tab names.
+- Release assets: add/remove via context menu (no separate remove button).
+- Spellcheck only on commit message, release title/notes, and new-repo description.
+- Branch pickers support **(none)** for merge/rebase/delete flows.
+- Draft branch field empty by default (empty = normal push).
+- Log and Safety log panels use the selected **contrast accent** border.
+- Primary action buttons are listed first in horizontal toolbars.
+- Standard **Windows title bar** (system minimize/maximize/close).
+
+### Fixed
+- Busy state could remain stuck after long Auto runs (busy scope + git process cleanup).
+- Theme/context menu resource loading at startup (`AppContextMenus`, merged dictionaries).
+- Auto release `target_commitish` resolution for draft/upstream branches.
+- Re-entrancy in changed-files vs auto-preview refresh.
+
 ## 1.4.4 — 2026-05-16
 
 ### Changed

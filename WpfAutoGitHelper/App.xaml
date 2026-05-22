@@ -5,6 +5,8 @@
     <Application.Resources>
         <ResourceDictionary>
             <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+            <converters:InverseBoolToVisibilityConverter xmlns:converters="clr-namespace:WpfAutoGitHelper.Converters" x:Key="InverseBoolToVis"/>
+            <converters:InverseBoolConverter xmlns:converters="clr-namespace:WpfAutoGitHelper.Converters" x:Key="InverseBool"/>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Themes/LightTheme.xaml"/>
             </ResourceDictionary.MergedDictionaries>

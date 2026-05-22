@@ -1,0 +1,84 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ContextMenu x:Key="RepoPathContextMenu"
+                 Style="{DynamicResource AppContextMenuStyle}"
+                 Background="{DynamicResource BrushCardBg}"
+                 BorderBrush="{DynamicResource BrushBorder}"
+                 BorderThickness="1"
+                 Padding="6"
+                 ItemContainerStyle="{DynamicResource AppContextMenuItemStyle}"
+                 DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+        <MenuItem Header="{Binding Ui.CtxBrowseFolder}" Command="{Binding BrowseRepoCommand}"/>
+        <MenuItem Header="{Binding Ui.CtxSaveRepo}" Command="{Binding SaveRepoCommand}"/>
+        <MenuItem Header="{Binding Ui.CtxRefreshStatus}" Command="{Binding RefreshStatusCommand}"/>
+        <Separator Style="{DynamicResource AppContextSeparatorStyle}"/>
+        <MenuItem Header="{Binding Ui.CtxOpenFolder}" Command="{Binding OpenFolderCommand}"/>
+        <MenuItem Header="{Binding Ui.CtxOpenGitHub}" Command="{Binding OpenGitHubCommand}"/>
+    </ContextMenu>
+
+    <ContextMenu x:Key="ChangedFilesContextMenu"
+                 Style="{DynamicResource AppContextMenuStyle}"
+                 Background="{DynamicResource BrushCardBg}"
+                 BorderBrush="{DynamicResource BrushBorder}"
+                 BorderThickness="1"
+                 Padding="6"
+                 ItemContainerStyle="{DynamicResource AppContextMenuItemStyle}"
+                 DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+        <MenuItem Header="{Binding Ui.StagingSelectAll}" Command="{Binding StagingSelectAllCommand}"/>
+        <MenuItem Header="{Binding Ui.StagingSelectNone}" Command="{Binding StagingSelectNoneCommand}"/>
+        <Separator Style="{DynamicResource AppContextSeparatorStyle}"/>
+        <MenuItem Header="{Binding Ui.CtxRefreshFiles}" Command="{Binding RefreshChangedFilesCommand}"/>
+        <MenuItem Header="{Binding Ui.BtnRestoreFile}" Command="{Binding RestoreSelectedFileCommand}"/>
+        <Separator Style="{DynamicResource AppContextSeparatorStyle}"/>
+        <MenuItem Header="{Binding Ui.BtnStageSelected}" Command="{Binding StageSelectedFilesCommand}"/>
+        <MenuItem Header="{Binding Ui.BtnUnstageSelected}" Command="{Binding UnstageSelectedFilesCommand}"/>
+        <Separator Style="{DynamicResource AppContextSeparatorStyle}"/>
+        <MenuItem Header="{Binding Ui.BtnGitRm}" Command="{Binding GitRmSelectedFileCommand}"/>
+        <MenuItem Header="{Binding Ui.BtnDeleteUntracked}" Command="{Binding DeleteUntrackedFileCommand}"/>
+    </ContextMenu>
+
+    <ContextMenu x:Key="TextEditContextMenu"
+                 Style="{DynamicResource AppContextMenuStyle}"
+                 Background="{DynamicResource BrushCardBg}"
+                 BorderBrush="{DynamicResource BrushBorder}"
+                 BorderThickness="1"
+                 Padding="6"
+                 ItemContainerStyle="{DynamicResource AppContextMenuItemStyle}"
+                 DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+        <MenuItem Header="{Binding Ui.CtxCut}" Command="ApplicationCommands.Cut"/>
+        <MenuItem Header="{Binding Ui.CtxCopy}" Command="ApplicationCommands.Copy"/>
+        <MenuItem Header="{Binding Ui.CtxPaste}" Command="ApplicationCommands.Paste"/>
+        <MenuItem Header="{Binding Ui.CtxSelectAll}" Command="ApplicationCommands.SelectAll"/>
+    </ContextMenu>
+
+    <ContextMenu x:Key="LogContextMenu"
+                 Style="{DynamicResource AppContextMenuStyle}"
+                 Background="{DynamicResource BrushCardBg}"
+                 BorderBrush="{DynamicResource BrushBorder}"
+                 BorderThickness="1"
+                 Padding="6"
+                 ItemContainerStyle="{DynamicResource AppContextMenuItemStyle}"
+                 DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+        <MenuItem Header="{Binding Ui.CtxCopy}" Command="ApplicationCommands.Copy"/>
+        <MenuItem Header="{Binding Ui.CtxSelectAll}" Command="ApplicationCommands.SelectAll"/>
+        <Separator Style="{DynamicResource AppContextSeparatorStyle}"/>
+        <MenuItem Header="{Binding Ui.BtnClearLog}" Command="{Binding ClearLogCommand}"/>
+    </ContextMenu>
+
+    <ContextMenu x:Key="ReleaseAssetsContextMenu"
+                 Style="{DynamicResource AppContextMenuStyle}"
+                 Background="{DynamicResource BrushCardBg}"
+                 BorderBrush="{DynamicResource BrushBorder}"
+                 BorderThickness="1"
+                 Padding="6"
+                 ItemContainerStyle="{DynamicResource AppContextMenuItemStyle}"
+                 DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+        <MenuItem Header="{Binding Ui.BtnReleaseRemoveFile}" Command="{Binding RemoveReleaseAssetCommand}"/>
+        <Separator Style="{DynamicResource AppContextSeparatorStyle}"/>
+        <MenuItem Header="{Binding Ui.BtnReleaseAddFiles}" Command="{Binding AddReleaseAssetsCommand}"/>
+        <MenuItem Header="{Binding Ui.BtnReleaseAddImages}" Command="{Binding AddReleaseImagesCommand}"/>
+        <MenuItem Header="{Binding Ui.BtnReleaseAddBuild}" Command="{Binding AddReleaseBuildOutputCommand}"/>
+    </ContextMenu>
+
+</ResourceDictionary>

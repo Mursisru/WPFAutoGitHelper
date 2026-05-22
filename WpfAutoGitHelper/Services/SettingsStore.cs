@@ -11,6 +11,7 @@ namespace WpfAutoGitHelper.Services
         public string RepoPath { get; set; } = "";
         public string LastCommitMessage { get; set; } = "";
         public string CachedGitHubUrl { get; set; } = "";
+        public string LastOriginRemoteUrl { get; set; } = "";
         public List<string> RecentRepoPaths { get; set; } = new List<string>();
         public string Language { get; set; } = "en";
         public string Theme { get; set; } = "light";
@@ -23,6 +24,11 @@ namespace WpfAutoGitHelper.Services
         public string LastReleaseTitle { get; set; } = "";
         public string LastReleaseNotes { get; set; } = "";
         public List<string> LastReleaseAssetPaths { get; set; } = new List<string>();
+        /// <summary>Last session UI mode; empty = use DefaultUiMode on startup.</summary>
+        public string UiMode { get; set; } = "";
+        public string DefaultUiMode { get; set; } = "easy";
+        public bool ShowFieldHints { get; set; } = true;
+        public bool AutoRunCreateGithubRepo { get; set; }
     }
 
     public static class SettingsStore
