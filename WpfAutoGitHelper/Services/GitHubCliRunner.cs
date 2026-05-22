@@ -186,6 +186,19 @@ namespace WpfAutoGitHelper.Services
             return webUrl + ".git";
         }
 
+        public static async Task<bool> ReleaseTagExistsAsync(
+            string repoPath,
+            string tag,
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(tag))
+                return false;
+
+            var result = await RunAsync(repoPath, cancellationToken, "release", "view", tag.Trim())
+                .ConfigureAwait(false);
+            return result.Success;
+        }
+
         public static async Task<GitRunResult> CreateReleaseAsync(
             string repoPath,
             ReleaseRequest request,

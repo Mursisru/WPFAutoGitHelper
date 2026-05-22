@@ -1629,9 +1629,18 @@ namespace WpfAutoGitHelper.ViewModels
 
             AppendLog(string.Format(Loc.Get("Msg_ReleaseTargetBranchResolved"), resolved));
 
+            var tag = ReleaseTag.Trim();
+            if (await GitHubCliRunner.ReleaseTagExistsAsync(RepoPath, tag, CancellationToken.None).ConfigureAwait(true))
+            {
+                await NotifyAsync(string.Format(Loc.Get("Msg_ReleaseTagAlreadyExists"), tag), isError: true)
+                    .ConfigureAwait(true);
+                AppendLog(Loc.Get("Msg_ReleaseTagAlreadyExistsHint"));
+                return false;
+            }
+
             var request = new ReleaseRequest
             {
-                Tag = ReleaseTag.Trim(),
+                Tag = tag,
                 Title = ReleaseTitle?.Trim(),
                 Notes = ReleaseNotes?.Trim(),
                 TargetBranch = resolved,
