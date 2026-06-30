@@ -6,6 +6,21 @@
 [![Version](https://img.shields.io/badge/Version-1.5.0-green)](https://github.com/Mursisru/WPFAutoGitHelper/releases/tag/v1.5.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow)](https://github.com/Mursisru/WPFAutoGitHelper/blob/main/LICENSE)
 
+---
+
+## Critical warnings
+
+> [!IMPORTANT]
+> **Git for Windows on PATH** - `git.exe` required for all workflows.
+
+> [!IMPORTANT]
+> **GitHub CLI (`gh`) required** for **Create on GitHub** and **Release publishing** - run `gh auth login` first.
+
+> [!WARNING]
+> **Advanced mode includes destructive Git actions** - force-with-lease, amend, and branch delete require explicit confirmation; review the safety log.
+
+> [!NOTE]
+> **Passwords and PATs are not stored** - use Git Credential Manager; HTTPS needs a personal access token, not your GitHub password.
 
 Small **Windows WPF** app: run common **Git** actions with buttons for **any** local repository — no terminal required.
 
@@ -38,22 +53,6 @@ Portable data (created on first save): `WpfAutoGitHelper\bin\Release\Data\settin
 3. Set the repository folder (clone root) and click **Save**.  
 4. On the **Identity** tab, set **user.name** / **user.email** (Load / Apply) — global only.  
 5. On first **Push**, Git Credential Manager may prompt you; use a **personal access token** for HTTPS instead of your GitHub password.
-
----
-
-## Critical warnings
-
-> [!IMPORTANT]
-> **Git for Windows on PATH** - `git.exe` required for all workflows.
-
-> [!IMPORTANT]
-> **GitHub CLI (`gh`) required** for **Create on GitHub** and **Release publishing** - run `gh auth login` first.
-
-> [!WARNING]
-> **Advanced mode includes destructive Git actions** - force-with-lease, amend, and branch delete require explicit confirmation; review the safety log.
-
-> [!NOTE]
-> **Passwords and PATs are not stored** - use Git Credential Manager; HTTPS needs a personal access token, not your GitHub password.
 
 ## Features
 
