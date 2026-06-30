@@ -39,6 +39,22 @@ Portable data (created on first save): `WpfAutoGitHelper\bin\Release\Data\settin
 4. On the **Identity** tab, set **user.name** / **user.email** (Load / Apply) — global only.  
 5. On first **Push**, Git Credential Manager may prompt you; use a **personal access token** for HTTPS instead of your GitHub password.
 
+---
+
+## Critical warnings
+
+> [!IMPORTANT]
+> **Git for Windows on PATH** - `git.exe` required for all workflows.
+
+> [!IMPORTANT]
+> **GitHub CLI (`gh`) required** for **Create on GitHub** and **Release publishing** - run `gh auth login` first.
+
+> [!WARNING]
+> **Advanced mode includes destructive Git actions** - force-with-lease, amend, and branch delete require explicit confirmation; review the safety log.
+
+> [!NOTE]
+> **Passwords and PATs are not stored** - use Git Credential Manager; HTTPS needs a personal access token, not your GitHub password.
+
 ## Features
 
 ### EZ mode
