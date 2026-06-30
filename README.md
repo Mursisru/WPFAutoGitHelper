@@ -9,12 +9,9 @@
 ---
 
 ## Critical warnings
-
 > [!IMPORTANT]
-> **Git for Windows on PATH** - `git.exe` required for all workflows.
-
-> [!IMPORTANT]
-> **GitHub CLI (`gh`) required** for **Create on GitHub** and **Release publishing** - run `gh auth login` first.
+> - **Git for Windows on PATH** - `git.exe` required for all workflows.
+> - **GitHub CLI (`gh`) required** for **Create on GitHub** and **Release publishing** - run `gh auth login` first.
 
 > [!WARNING]
 > **Advanced mode includes destructive Git actions** - force-with-lease, amend, and branch delete require explicit confirmation; review the safety log.
