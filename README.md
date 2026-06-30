@@ -1,4 +1,9 @@
+**Developer:** Mursisru
+
 # WPF Auto Git Helper
+
+[![.NET Framework](https://img.shields.io/badge/Platform-.NET%20Framework%204.8-512BD4)](https://dotnet.microsoft.com/download/dotnet-framework/net48) [![Version](https://img.shields.io/badge/Version-0.0.0-green)]() [![License](https://img.shields.io/badge/License-MIT-lightgrey)](LICENSE)
+
 
 Small **Windows WPF** app: run common **Git** actions with buttons for **any** local repository — no terminal required.
 
@@ -16,7 +21,12 @@ Small **Windows WPF** app: run common **Git** actions with buttons for **any** l
 ```powershell
 cd path\to\WpfAutoGitHelper
 $msbuild = "${env:ProgramFiles}\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
+**Developer:** Mursisru
+
 # or VS 18: ...\18\Community\MSBuild\Current\Bin\MSBuild.exe
+
+[![.NET Framework](https://img.shields.io/badge/Platform-.NET%20Framework%204.8-512BD4)](https://dotnet.microsoft.com/download/dotnet-framework/net48) [![Version](https://img.shields.io/badge/Version-0.0.0-green)]() [![License](https://img.shields.io/badge/License-MIT-lightgrey)](LICENSE)
+
 & $msbuild WpfAutoGitHelper.sln /p:Configuration=Release
 ```
 
@@ -68,3 +78,9 @@ Passwords and PATs are **not** stored in this app.
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+---
+
+## Keywords
+
+windows, wpf, dotnet-framework, wpfautogithelper, csharp
